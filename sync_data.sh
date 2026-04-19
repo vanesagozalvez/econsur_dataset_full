@@ -31,12 +31,13 @@ export GIT_TERMINAL_PROMPT=0
 for SUBDIR in "${!REPOS[@]}"; do
   REPO="${REPOS[$SUBDIR]}"
   TARGET="$DATA_DIR/$SUBDIR"
-  # Usamos la URL HTTPS estándar
-  URL="https://github.com/${GITHUB_USER}/${REPO}.git"
+  
+  # CAMBIO CLAVE: Usamos el protocolo git:// que es solo lectura y no pide usuario
+  URL="git://github.com/${GITHUB_USER}/${REPO}.git"
 
   echo ""
   echo "→ Procesando $REPO..."
-
+  
   # LÓGICA DE LIMPIEZA:
   # Si la carpeta existe pero NO es un repositorio Git (como las cargas manuales), se elimina.
   if [ -d "$TARGET" ] && [ ! -d "$TARGET/.git" ]; then

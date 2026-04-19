@@ -719,19 +719,30 @@ def export_dataset_csv(req: DatasetRequest):
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={fname}"},
     )
-
-
 # ─────────────────────────────────────────────────────────────────────────────
-# FRONTEND
+# FRONTEND - Configuración para Servicio Único Gratuito
 # ─────────────────────────────────────────────────────────────────────────────
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Intentar montar la carpeta 'static' si existe (donde irá el build de React)
+if (BASE_DIR / "static").exists():
+    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
+@app.get("/", response_class=HTMLResponse)
 @app.get("/{full_path:path}", response_class=HTMLResponse)
-def spa_fallback(full_path: str):
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return HTMLResponse(index.read_text(encoding="utf-8"))
-    return HTMLResponse("<h2>Frontend no disponible.</h2>", status_code=503)
+async def serve_frontend(full_path: str = ""):
+    # Si la ruta empieza con /api, no hacemos nada (deja que FastAPI maneje el error)
+    if full_path.startswith("api"):
+        raise HTTPException(status_code=404)
+        
+    index_path = BASE_DIR / "static" / "index.html"
+    if index_path.exists():
+        return HTMLResponse(index_path.read_text(encoding="utf-8"))
     
+    # Mensaje de bienvenida si aún no has subido el frontend
+    return HTMLResponse("""
+        <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+            <h1>EconSur API Online 🚀</h1>
+            <p>El backend está funcionando, pero falta la carpeta <b>static</b> con el frontend.</p>
+            <p>Accede a la documentación aquí: <a href="/docs">/docs</a></p>
+        </div>
+    """)

@@ -720,29 +720,32 @@ def export_dataset_csv(req: DatasetRequest):
         headers={"Content-Disposition": f"attachment; filename={fname}"},
     )
 # ─────────────────────────────────────────────────────────────────────────────
-# FRONTEND - Configuración para Servicio Único Gratuito
+# FRONTEND - MODO UNIFICADO
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Intentar montar la carpeta 'static' si existe (donde irá el build de React)
-if (BASE_DIR / "static").exists():
-    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+# Aseguramos que busque la carpeta 'static' dentro de 'backend' si es necesario
+STATIC_DIR = BASE_DIR / "static"
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/{full_path:path}", response_class=HTMLResponse)
 async def serve_frontend(full_path: str = ""):
-    # Si la ruta empieza con /api, no hacemos nada (deja que FastAPI maneje el error)
+    # Si la ruta es la API, dejamos que FastAPI la maneje arriba
     if full_path.startswith("api"):
         raise HTTPException(status_code=404)
         
-    index_path = BASE_DIR / "static" / "index.html"
+    index_path = STATIC_DIR / "index.html"
     if index_path.exists():
         return HTMLResponse(index_path.read_text(encoding="utf-8"))
     
-    # Mensaje de bienvenida si aún no has subido el frontend
-    return HTMLResponse("""
-        <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+    # Pantalla de auxilio si la carpeta static no está lista
+    return HTMLResponse(f"""
+        <div style="font-family:sans-serif; text-align:center; padding:50px;">
             <h1>EconSur API Online 🚀</h1>
-            <p>El backend está funcionando, pero falta la carpeta <b>static</b> con el frontend.</p>
-            <p>Accede a la documentación aquí: <a href="/docs">/docs</a></p>
+            <p>El motor está listo, pero no encontré la carpeta <b>static</b>.</p>
+            <p><a href="/docs">Ver documentación de la API</a></p>
         </div>
     """)
+  

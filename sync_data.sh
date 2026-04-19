@@ -2,8 +2,11 @@
 # sync_data.sh — Clona o actualiza los 4 repos de datos
 # Uso: bash sync_data.sh [TU_USUARIO_GITHUB]
 
+#!/usr/bin/env bash
 set -e
-GITHUB_USER="${1:-TU_USUARIO}"
+
+# Configuramos tu usuario directamente
+GITHUB_USER="vanesagozalvez"
 DATA_DIR="backend/data"
 
 declare -A REPOS=(

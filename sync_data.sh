@@ -28,7 +28,7 @@ mkdir -p "$DATA_DIR"
 for SUBDIR in "${!REPOS[@]}"; do
   REPO="${REPOS[$SUBDIR]}"
   TARGET="$DATA_DIR/$SUBDIR"
-  URL="https://github.com/$GITHUB_USER/$REPO.git"
+  URL="https://github.com/${GITHUB_USER}/${REPO}"
 
   echo ""
   echo "→ Procesando $REPO..."

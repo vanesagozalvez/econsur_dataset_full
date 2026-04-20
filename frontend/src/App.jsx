@@ -9,6 +9,7 @@ export default function App() {
   const [datasets, setDatasets] = useLocalStorage('econsur_v2', [])
   const [active,   setActive]   = useState('builder')
   const [notif,    setNotif]    = useState(null)
+  const [collapsed, setCollapsed] = useState(false)
 
   const notify = (msg, type = 'ok') => {
     setNotif({ msg, type })
@@ -16,8 +17,8 @@ export default function App() {
   }
 
   const save = (ds) => {
-    if (datasets.length >= MAX)                            { notify(`Límite de ${MAX} datasets alcanzado.`, 'err'); return false }
-    if (datasets.find(d => d.nombre === ds.nombre))        { notify(`Ya existe un dataset "${ds.nombre}".`, 'err'); return false }
+    if (datasets.length >= MAX)                     { notify(`Límite de ${MAX} datasets alcanzado.`, 'err'); return false }
+    if (datasets.find(d => d.nombre === ds.nombre)) { notify(`Ya existe un dataset "${ds.nombre}".`, 'err'); return false }
     setDatasets(p => [...p, ds])
     setActive(ds.nombre)
     notify(`Dataset "${ds.nombre}" guardado.`)
@@ -30,74 +31,107 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--ink-950)' }}>
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden', background:'var(--ink-950)' }}>
 
-      {/* ── Header ── */}
-      <header style={{ borderBottom:'1px solid #1a1a24', background:'var(--ink-950)' }}
-              className="px-5 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs"
-               style={{ background:'linear-gradient(135deg,#e8a820,#38d9c0)', color:'#000' }}>E</div>
-          <span className="font-display text-lg text-white">
-            Econ<span style={{ color:'var(--gold)' }}>Sur</span>
-          </span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-mono"
-                style={{ background:'var(--ink-800)', color:'#55556a', border:'1px solid var(--ink-700)' }}>
-            Dataset Studio
-          </span>
+      {/* ── SIDEBAR ── */}
+      <aside style={{
+        width: collapsed ? 52 : 196,
+        minWidth: collapsed ? 52 : 196,
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ink-900)',
+        borderRight: '1px solid var(--ink-800)',
+        transition: 'width 0.2s ease, min-width 0.2s ease',
+        overflow: 'hidden',
+      }}>
+
+        {/* Logo */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:10,
+          padding: collapsed ? '14px 12px' : '14px 12px',
+          borderBottom:'1px solid var(--ink-800)', flexShrink:0,
+          justifyContent: collapsed ? 'center' : 'flex-start',
+        }}>
+          <div style={{
+            width:28, height:28, borderRadius:8, flexShrink:0,
+            background:'linear-gradient(135deg,#e8a820,#38d9c0)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontWeight:'bold', fontSize:13, color:'#000',
+          }}>E</div>
+          {!collapsed && (
+            <div style={{ overflow:'hidden' }}>
+              <div style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:15, color:'#fff', whiteSpace:'nowrap' }}>
+                Econ<span style={{ color:'var(--gold)' }}>Sur</span>
+              </div>
+              <div style={{ fontSize:10, fontFamily:'"JetBrains Mono",monospace', color:'#44446a', whiteSpace:'nowrap' }}>
+                Dataset Studio
+              </div>
+            </div>
+          )}
         </div>
-        <span className="text-xs font-mono" style={{ color:'#44446a' }}>
-          {datasets.length}/{MAX} datasets
-        </span>
-      </header>
 
-      {/* ── Tab bar ── */}
-      <nav style={{ background:'var(--ink-900)', borderBottom:'1px solid #1a1a24', minHeight:42 }}
-           className="px-4 flex items-center gap-1 overflow-x-auto flex-shrink-0">
+        {/* Nav */}
+        <nav style={{ flex:1, overflowY:'auto', padding:'8px 6px', display:'flex', flexDirection:'column', gap:2 }}>
+          <NavItem active={active==='builder'} color="var(--gold)"
+            onClick={() => setActive('builder')} collapsed={collapsed}
+            icon={<PlusIcon />} label="Nuevo Dataset" />
 
-        {/* Builder tab */}
-        <TabButton
-          active={active === 'builder'}
-          onClick={() => setActive('builder')}
-          color="var(--gold)"
-          icon={<PlusIcon />}
-          label="Nuevo Dataset"
-        />
+          {datasets.length > 0 && (
+            <div style={{ height:1, background:'var(--ink-700)', margin:'6px 4px' }} />
+          )}
 
-        {datasets.length > 0 && <div className="w-px h-4 mx-1" style={{ background:'var(--ink-700)' }} />}
+          {datasets.map((ds, i) => (
+            <NavItem key={ds.nombre}
+              active={active===ds.nombre} color="var(--teal)"
+              onClick={() => setActive(ds.nombre)} collapsed={collapsed}
+              icon={<DsIcon i={i} />} label={ds.nombre}
+              onClose={() => del(ds.nombre)} />
+          ))}
+        </nav>
 
-        {datasets.map(ds => (
-          <TabButton
-            key={ds.nombre}
-            active={active === ds.nombre}
-            onClick={() => setActive(ds.nombre)}
-            color="var(--teal)"
-            icon={<GridIcon />}
-            label={ds.nombre}
-            onClose={() => del(ds.nombre)}
-          />
-        ))}
-      </nav>
+        {/* Footer */}
+        <div style={{ flexShrink:0, padding:'8px 6px', borderTop:'1px solid var(--ink-800)' }}>
+          {!collapsed && (
+            <div style={{ textAlign:'center', fontSize:11, fontFamily:'"JetBrains Mono",monospace', color:'#2a2a3e', marginBottom:6 }}>
+              {datasets.length}/{MAX} datasets
+            </div>
+          )}
+          <button onClick={() => setCollapsed(c => !c)}
+            style={{
+              width:'100%', display:'flex', alignItems:'center', justifyContent:'center',
+              padding:'6px', borderRadius:8, cursor:'pointer',
+              background:'transparent', border:'none', color:'#44446a',
+              transition:'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background='var(--ink-800)'}
+            onMouseLeave={e => e.currentTarget.style.background='transparent'}
+            title={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+          >
+            <CollapseIcon collapsed={collapsed} />
+          </button>
+        </div>
+      </aside>
 
-      {/* ── Main content ── */}
-      <main className="flex-1 overflow-hidden">
+      {/* ── MAIN AREA ── */}
+      <div style={{ flex:1, minWidth:0, overflow:'hidden', display:'flex', flexDirection:'column' }}>
         {active === 'builder' && (
           <BuilderPanel onSave={save} savedCount={datasets.length} max={MAX} />
         )}
         {datasets.map(ds =>
           active === ds.nombre && <DatasetTab key={ds.nombre} dataset={ds} />
         )}
-      </main>
+      </div>
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       {notif && (
-        <div className="fixed bottom-5 right-5 px-4 py-2.5 rounded-xl text-sm font-medium z-50 fade-up"
-             style={{
-               background: notif.type === 'err' ? '#1f0a0a' : '#0a1f14',
-               border: `1px solid ${notif.type === 'err' ? 'var(--coral)' : 'var(--teal)'}`,
-               color:   notif.type === 'err' ? 'var(--coral)' : 'var(--teal)',
-             }}>
+        <div className="fade-up" style={{
+          position:'fixed', bottom:20, right:20, zIndex:50,
+          padding:'10px 16px', borderRadius:12, fontSize:13, fontWeight:500,
+          background: notif.type==='err' ? '#1f0a0a' : '#0a1f14',
+          border: `1px solid ${notif.type==='err' ? 'var(--coral)' : 'var(--teal)'}`,
+          color: notif.type==='err' ? 'var(--coral)' : 'var(--teal)',
+        }}>
           {notif.msg}
         </div>
       )}
@@ -105,37 +139,61 @@ export default function App() {
   )
 }
 
-function TabButton({ active, onClick, color, icon, label, onClose }) {
+function NavItem({ active, color, onClick, collapsed, icon, label, onClose }) {
+  const [hov, setHov] = useState(false)
   return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-t whitespace-nowrap transition-all group"
-      style={active
-        ? { color, borderBottom: `2px solid ${color}`, background:'var(--ink-800)', fontWeight:500 }
-        : { color:'#44446a', borderBottom:'2px solid transparent' }}
-    >
-      <span className="w-3 h-3">{icon}</span>
-      {label}
-      {onClose && (
-        <span
-          onClick={e => { e.stopPropagation(); onClose() }}
-          className="ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ color:'#44446a', lineHeight:1 }}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--coral)'}
-          onMouseLeave={e => e.currentTarget.style.color = '#44446a'}
-        >×</span>
+    <div style={{ position:'relative' }}
+         onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <button onClick={onClick} style={{
+        width:'100%', display:'flex', alignItems:'center',
+        gap: collapsed ? 0 : 9,
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        padding: collapsed ? '8px 10px' : '7px 10px',
+        borderRadius:8, cursor:'pointer', border: active ? `1px solid ${color}28` : '1px solid transparent',
+        background: active ? color+'14' : hov ? 'var(--ink-800)' : 'transparent',
+        color: active ? color : '#55556a',
+        fontWeight: active ? 500 : 400,
+        fontSize:13, transition:'all 0.12s', textAlign:'left',
+      }}>
+        <span style={{ width:16, height:16, flexShrink:0, display:'flex' }}>{icon}</span>
+        {!collapsed && <span style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{label}</span>}
+        {!collapsed && onClose && hov && (
+          <span onClick={e => { e.stopPropagation(); onClose() }}
+            style={{ flexShrink:0, width:16, height:16, display:'flex', alignItems:'center', justifyContent:'center',
+                     borderRadius:4, fontSize:14, lineHeight:1, color:'#55556a', cursor:'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.color='var(--coral)'}
+            onMouseLeave={e => e.currentTarget.style.color='#55556a'}
+          >×</span>
+        )}
+      </button>
+      {/* Tooltip colapsado */}
+      {collapsed && hov && (
+        <div style={{
+          position:'absolute', left:'calc(100% + 8px)', top:'50%', transform:'translateY(-50%)',
+          padding:'4px 10px', borderRadius:6, fontSize:12, whiteSpace:'nowrap', zIndex:100,
+          background:'var(--ink-700)', color:'#e8e8f0', border:'1px solid var(--ink-600)',
+          pointerEvents:'none',
+        }}>{label}</div>
       )}
-    </button>
+    </div>
   )
 }
 
 const PlusIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3.5 h-3.5">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width:'100%', height:'100%' }}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
   </svg>
 )
-const GridIcon = () => (
-  <svg fill="currentColor" viewBox="0 0 20 20" className="w-3 h-3">
-    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+const DsIcon = () => (
+  <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:'100%', height:'100%' }}>
+    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/>
+  </svg>
+)
+const CollapseIcon = ({ collapsed }) => (
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width:16, height:16 }}>
+    {collapsed
+      ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+      : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+    }
   </svg>
 )

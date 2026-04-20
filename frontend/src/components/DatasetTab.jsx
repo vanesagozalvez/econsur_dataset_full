@@ -22,62 +22,66 @@ export default function DatasetTab({ dataset }) {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden fade-up">
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}
+         className="fade-up">
 
       {/* ── Sub-header ── */}
-      <div className="flex-shrink-0 px-5 py-3 flex items-center justify-between gap-4"
-           style={{ background:'var(--ink-900)', borderBottom:'1px solid var(--ink-800)' }}>
-        <div className="flex items-center gap-4 min-w-0">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg text-white leading-tight truncate">{dataset.nombre}</h2>
-            <p className="text-xs" style={{ color:'#44446a' }}>
+      <div style={{
+        flexShrink:0, padding:'10px 20px',
+        display:'flex', alignItems:'center', justifyContent:'space-between', gap:12,
+        background:'var(--ink-900)', borderBottom:'1px solid var(--ink-800)',
+      }}>
+        <div style={{ display:'flex', alignItems:'center', gap:16, minWidth:0 }}>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:18, color:'#fff', lineHeight:1.2 }}>
+              {dataset.nombre}
+            </div>
+            <div style={{ fontSize:11, color:'#44446a', marginTop:2 }}>
               {dataset.desde} → {dataset.hasta} · {dataset.frecuencia} · {data.length} períodos · {cols.length} series
-            </p>
+            </div>
           </div>
           {/* Badges */}
-          <div className="hidden md:flex flex-wrap gap-1.5">
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
             {cols.map(c => (
-              <span key={c.label} className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{ background:(RC[c.repo]||'#88889a')+'18', color:RC[c.repo]||'#88889a',
-                             border:`1px solid ${(RC[c.repo]||'#88889a')}30` }}>
-                {c.label}
-              </span>
+              <span key={c.label} style={{
+                fontSize:11, padding:'2px 8px', borderRadius:20, fontWeight:500,
+                background:(RC[c.repo]||'#88889a')+'18',
+                color: RC[c.repo]||'#88889a',
+                border:`1px solid ${(RC[c.repo]||'#88889a')}28`,
+              }}>{c.label}</span>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {err && <span className="text-xs" style={{ color:'var(--coral)' }}>{err}</span>}
-          <button onClick={doExport} disabled={busy || !data.length}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-40 transition-all"
-            style={{ background:'var(--ink-800)', border:'1px solid var(--ink-700)', color:'#88889a' }}
-            onMouseEnter={e => { if(!busy) e.currentTarget.style.borderColor='var(--gold)' }}
-            onMouseLeave={e => e.currentTarget.style.borderColor='var(--ink-700)'}>
-            <DownloadIcon />
-            {busy ? 'Exportando…' : 'CSV'}
-          </button>
+
+        {/* Acciones */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+          {err && <span style={{ fontSize:11, color:'var(--coral)' }}>{err}</span>}
+          <ExportBtn onClick={doExport} disabled={busy || !data.length} label={busy ? 'Exportando…' : 'CSV'} />
         </div>
       </div>
 
       {/* ── View selector ── */}
-      <div className="flex-shrink-0 px-5 py-1.5 flex gap-1"
-           style={{ borderBottom:'1px solid var(--ink-800)' }}>
-        {[
-          ['chart', 'Gráfico',  <ChartSvg />],
-          ['table', 'Tabla',    <TableSvg />],
-          ['info',  'Metadata', <InfoSvg  />],
-        ].map(([id, lbl, ico]) => (
-          <button key={id} onClick={() => setView(id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-            style={view === id
-              ? { background:'var(--ink-800)', color:'#e8e8f0', border:'1px solid var(--ink-700)' }
-              : { color:'#44446a' }}>
+      <div style={{
+        flexShrink:0, padding:'6px 20px', display:'flex', gap:4,
+        borderBottom:'1px solid var(--ink-800)',
+      }}>
+        {[['chart','Gráfico',<ChartSvg/>],['table','Tabla',<TableSvg/>],['info','Metadata',<InfoSvg/>]]
+          .map(([id, lbl, ico]) => (
+          <button key={id} onClick={() => setView(id)} style={{
+            display:'flex', alignItems:'center', gap:6,
+            padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:500, cursor:'pointer',
+            background: view===id ? 'var(--ink-800)' : 'transparent',
+            color: view===id ? '#e8e8f0' : '#44446a',
+            border: view===id ? '1px solid var(--ink-700)' : '1px solid transparent',
+            transition:'all 0.12s',
+          }}>
             {ico} {lbl}
           </button>
         ))}
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-hidden p-5">
+      <div style={{ flex:1, overflow:'hidden', padding:20 }}>
         {view === 'chart' && <ChartPanel dataset={dataset} />}
         {view === 'table' && <TableView data={data} cols={cols} />}
         {view === 'info'  && <MetaView  dataset={dataset} cols={cols} />}
@@ -86,7 +90,7 @@ export default function DatasetTab({ dataset }) {
   )
 }
 
-// ── Tabla ─────────────────────────────────────────────────────────────────────
+/* ── Tabla ── */
 function TableView({ data, cols }) {
   const [page, setPage] = useState(0)
   const PS = 50
@@ -100,16 +104,15 @@ function TableView({ data, cols }) {
   }
 
   return (
-    <div className="flex flex-col h-full gap-3">
-      <div className="flex-1 overflow-auto rounded-xl" style={{ border:'1px solid var(--ink-800)' }}>
-        <table className="w-full text-xs">
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', gap:10 }}>
+      <div style={{ flex:1, overflow:'auto', borderRadius:10, border:'1px solid var(--ink-800)' }}>
+        <table style={{ width:'100%', fontSize:12, borderCollapse:'collapse' }}>
           <thead>
-            <tr style={{ background:'var(--ink-900)', borderBottom:'1px solid var(--ink-800)', position:'sticky', top:0 }}>
-              <th className="text-left px-4 py-2.5 font-medium" style={{ color:'#55556a' }}>Período</th>
+            <tr style={{ background:'var(--ink-900)', position:'sticky', top:0 }}>
+              <th style={{ textAlign:'left', padding:'10px 14px', color:'#55556a', fontWeight:500, borderBottom:'1px solid var(--ink-800)' }}>Período</th>
               {cols.map(c => (
-                <th key={c.label} className="text-right px-4 py-2.5 font-medium whitespace-nowrap"
-                    style={{ color:'#55556a' }}>
-                  {c.label}{c.unidad && <span className="ml-1 opacity-40">({c.unidad})</span>}
+                <th key={c.label} style={{ textAlign:'right', padding:'10px 14px', color:'#55556a', fontWeight:500, whiteSpace:'nowrap', borderBottom:'1px solid var(--ink-800)' }}>
+                  {c.label}{c.unidad && <span style={{ opacity:.4, marginLeft:4 }}>({c.unidad})</span>}
                 </th>
               ))}
             </tr>
@@ -119,9 +122,9 @@ function TableView({ data, cols }) {
               <tr key={row.periodo||i} style={{ borderBottom:'1px solid var(--ink-900)' }}
                   onMouseEnter={e => e.currentTarget.style.background='var(--ink-900)'}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                <td className="px-4 py-2 font-mono" style={{ color:'var(--gold)' }}>{row.periodo}</td>
+                <td style={{ padding:'8px 14px', fontFamily:'"JetBrains Mono",monospace', color:'var(--gold)', borderRight:'1px solid var(--ink-800)' }}>{row.periodo}</td>
                 {cols.map(c => (
-                  <td key={c.label} className="px-4 py-2 text-right font-mono" style={{ color:'#c8c8d8' }}>
+                  <td key={c.label} style={{ padding:'8px 14px', textAlign:'right', fontFamily:'"JetBrains Mono",monospace', color:'#c8c8d8' }}>
                     {fmt(row[c.label])}
                   </td>
                 ))}
@@ -131,21 +134,15 @@ function TableView({ data, cols }) {
         </table>
       </div>
       {total > 1 && (
-        <div className="flex items-center justify-between flex-shrink-0">
-          <span className="text-xs" style={{ color:'#44446a' }}>
-            {page*PS+1}–{Math.min((page+1)*PS, data.length)} de {data.length}
-          </span>
-          <div className="flex gap-1">
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+          <span style={{ fontSize:11, color:'#44446a' }}>{page*PS+1}–{Math.min((page+1)*PS, data.length)} de {data.length}</span>
+          <div style={{ display:'flex', gap:4 }}>
             {[['«',0],['‹',page-1]].map(([l,t]) => (
-              <button key={l} onClick={() => setPage(Math.max(0,t))} disabled={page===0}
-                className="px-2 py-1 rounded text-xs disabled:opacity-30"
-                style={{ background:'var(--ink-800)', color:'#88889a' }}>{l}</button>
+              <PagBtn key={l} onClick={() => setPage(Math.max(0,t))} disabled={page===0} label={l} />
             ))}
-            <span className="px-2 py-1 text-xs" style={{ color:'#44446a' }}>{page+1}/{total}</span>
-            {[['>',page+1],['»',total-1]].map(([l,t]) => (
-              <button key={l} onClick={() => setPage(Math.min(total-1,t))} disabled={page>=total-1}
-                className="px-2 py-1 rounded text-xs disabled:opacity-30"
-                style={{ background:'var(--ink-800)', color:'#88889a' }}>{l}</button>
+            <span style={{ padding:'4px 10px', fontSize:11, color:'#44446a' }}>{page+1}/{total}</span>
+            {[['›',page+1],['»',total-1]].map(([l,t]) => (
+              <PagBtn key={l} onClick={() => setPage(Math.min(total-1,t))} disabled={page>=total-1} label={l} />
             ))}
           </div>
         </div>
@@ -154,56 +151,76 @@ function TableView({ data, cols }) {
   )
 }
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
+/* ── Metadata ── */
 function MetaView({ dataset, cols }) {
   return (
-    <div className="space-y-5 overflow-y-auto h-full pr-1">
-      <div className="rounded-xl p-4" style={{ background:'var(--ink-900)', border:'1px solid var(--ink-800)' }}>
-        <h3 className="text-sm font-semibold text-white mb-3">Parámetros</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
+    <div style={{ overflowY:'auto', height:'100%', display:'flex', flexDirection:'column', gap:16 }}>
+      <div style={{ padding:16, borderRadius:10, background:'var(--ink-900)', border:'1px solid var(--ink-800)' }}>
+        <div style={{ fontSize:13, fontWeight:600, color:'#fff', marginBottom:12 }}>Parámetros del Dataset</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
           {[['Nombre',dataset.nombre],['Frecuencia',dataset.frecuencia],
             ['Período',`${dataset.desde} → ${dataset.hasta}`],
             ['Series',`${cols.length}`],
             ['Observaciones',`${dataset.result?.data?.length||0} períodos`]
           ].map(([k,v]) => (
-            <div key={k} className="flex flex-col gap-0.5">
-              <span className="text-xs" style={{ color:'#44446a' }}>{k}</span>
-              <span className="text-sm" style={{ color:'#c8c8d8' }}>{v}</span>
+            <div key={k}>
+              <div style={{ fontSize:11, color:'#44446a' }}>{k}</div>
+              <div style={{ fontSize:13, color:'#c8c8d8', marginTop:2 }}>{v}</div>
             </div>
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-white">Series</h3>
-        {cols.map((c, i) => {
-          const color = RC[c.repo]||'#88889a'
-          const ref   = dataset.series?.[i]
-          return (
-            <div key={c.label} className="rounded-xl p-3 space-y-1.5"
-                 style={{ background:'var(--ink-900)', border:`1px solid ${color}28` }}>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ background:color }} />
-                <span className="text-sm font-medium text-white flex-1">{c.label}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ background:color+'18', color }}>{RL[c.repo]||c.repo}</span>
-              </div>
-              {ref && (
-                <div className="text-xs pl-4 space-y-0.5" style={{ color:'#44446a' }}>
-                  <p>Fuente: <span style={{ color:'#55556a' }}>{ref.fuente}</span></p>
-                  <p>Serie: <span style={{ color:'#55556a' }}>{ref.serie}</span></p>
-                  {c.unidad && <p>Unidad: <span style={{ color:'#55556a' }}>{c.unidad}</span></p>}
+      <div>
+        <div style={{ fontSize:13, fontWeight:600, color:'#fff', marginBottom:10 }}>Series</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {cols.map((c, i) => {
+            const color = RC[c.repo]||'#88889a'
+            const ref   = dataset.series?.[i]
+            return (
+              <div key={c.label} style={{ padding:12, borderRadius:10, background:'var(--ink-900)', border:`1px solid ${color}28` }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: ref ? 8 : 0 }}>
+                  <span style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0 }} />
+                  <span style={{ fontSize:13, fontWeight:500, color:'#fff', flex:1 }}>{c.label}</span>
+                  <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:color+'18', color }}>{RL[c.repo]||c.repo}</span>
                 </div>
-              )}
-            </div>
-          )
-        })}
+                {ref && (
+                  <div style={{ fontSize:11, color:'#55556a', paddingLeft:16, display:'flex', flexDirection:'column', gap:2 }}>
+                    <span>Fuente: {ref.fuente}</span>
+                    <span>Serie: {ref.serie}</span>
+                    {c.unidad && <span>Unidad: {c.unidad}</span>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
 
-// Icons
-const DownloadIcon = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-const ChartSvg   = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-const TableSvg   = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M10 3v18M14 3v18"/></svg>
-const InfoSvg    = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+/* ── Helpers ── */
+const ExportBtn = ({ onClick, disabled, label }) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    display:'flex', alignItems:'center', gap:6, padding:'6px 12px',
+    borderRadius:8, fontSize:12, fontWeight:500, cursor: disabled ? 'not-allowed' : 'pointer',
+    background:'var(--ink-800)', border:'1px solid var(--ink-700)', color:'#88889a',
+    opacity: disabled ? .4 : 1, transition:'border-color 0.12s',
+  }}
+  onMouseEnter={e => { if(!disabled) e.currentTarget.style.borderColor='var(--gold)' }}
+  onMouseLeave={e => e.currentTarget.style.borderColor='var(--ink-700)'}>
+  <DownIcon /> {label}
+  </button>
+)
+
+const PagBtn = ({ onClick, disabled, label }) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    padding:'4px 8px', borderRadius:6, fontSize:12, cursor: disabled?'not-allowed':'pointer',
+    background:'var(--ink-800)', color:'#88889a', border:'none', opacity: disabled?.3:1,
+  }}>{label}</button>
+)
+
+const DownIcon  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+const ChartSvg  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+const TableSvg  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M10 3v18M14 3v18"/></svg>
+const InfoSvg   = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

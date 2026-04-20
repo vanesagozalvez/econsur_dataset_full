@@ -369,7 +369,7 @@ def get_periodos(repo: str = Query(...), fuente: str = Query(...),
     rows = _fetch_rows(repo, fuente, frecuencia, serie, meta_idx)
     if not rows:
         return {"desde": None, "hasta": None}
-    periodos = [r["periodo"][:10] for r in rows if r.get("periodo")]
+    periodos = [r["periodo"][:10] for r in rows if r["periodo"]]
     return {"desde": min(periodos), "hasta": max(periodos)}
 
 # ── Core fetch logic ──────────────────────────────────────────────────────────
@@ -434,14 +434,18 @@ def _fetch_rows(repo, fuente, frecuencia, serie, meta_idx=None, desde=None, hast
         db_key, table = info
         conn = get_conn(db_key)
         try:
+            # Verificar si la tabla tiene columna 'unidad'
+            cols_info = conn.execute(f"PRAGMA table_info({table})").fetchall()
+            has_unidad = any(c["name"] == "unidad" for c in cols_info)
+            select_cols = "periodo, valor, unidad" if has_unidad else "periodo, valor"
             rows = conn.execute(
-                f"SELECT periodo, valor, unidad FROM {table} "
+                f"SELECT {select_cols} FROM {table} "
                 "WHERE ho_origen=? AND frecuencia=? AND serie_nombre=?" + psql + " ORDER BY periodo",
                 [fuente, frecuencia, serie] + pparams).fetchall()
         finally:
             conn.close()
         return [{"periodo": r["periodo"][:10] if r["periodo"] else None,
-                 "valor": r["valor"], "unidad": r.get("unidad", "")} for r in rows]
+                 "valor": r["valor"], "unidad": dict(r).get("unidad", "")} for r in rows]
 
     if repo == "precios":
         info = PRECIOS_DB_MAP.get(fuente)
@@ -449,14 +453,17 @@ def _fetch_rows(repo, fuente, frecuencia, serie, meta_idx=None, desde=None, hast
         db_key, table = info
         conn = get_conn(db_key)
         try:
+            cols_info = conn.execute(f"PRAGMA table_info({table})").fetchall()
+            has_unidad = any(c["name"] == "unidad" for c in cols_info)
+            select_cols = "periodo, valor, unidad" if has_unidad else "periodo, valor"
             rows = conn.execute(
-                f"SELECT periodo, valor, unidad FROM {table} "
+                f"SELECT {select_cols} FROM {table} "
                 "WHERE hoja_origen=? AND frecuencia=? AND serie_nombre=?" + psql + " ORDER BY periodo",
                 [fuente, frecuencia, serie] + pparams).fetchall()
         finally:
             conn.close()
         return [{"periodo": r["periodo"][:10] if r["periodo"] else None,
-                 "valor": r["valor"], "unidad": r.get("unidad", "")} for r in rows]
+                 "valor": r["valor"], "unidad": dict(r).get("unidad", "")} for r in rows]
 
     raise HTTPException(400, f"repo='{repo}' no reconocido.")
 

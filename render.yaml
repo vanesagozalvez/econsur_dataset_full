@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: econsur-api
+    runtime: python
+    rootDir: .
+    buildCommand: "pip install -r backend/requirements.txt && bash sync_data.sh"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"

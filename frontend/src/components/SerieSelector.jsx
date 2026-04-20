@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getFuentes, getFrecuencias, getSeries } from '../utils/api'
+import { getFuentes, getFrecuencias, getSeries, getPeriodos } from '../utils/api'
 
 const REPOS = [
   { value:'macro',    label:'Macroeconomía INDEC' },
@@ -8,22 +8,25 @@ const REPOS = [
   { value:'precios',  label:'Precios IPC' },
 ]
 
-const S = { background:'var(--ink-800)', border:'1px solid var(--ink-700)',
-            color:'#c8c8d8', borderRadius:8, padding:'6px 10px', fontSize:13, width:'100%' }
+const S = {
+  background:'var(--ink-800)', border:'1px solid var(--ink-700)',
+  color:'#c8c8d8', borderRadius:8, padding:'6px 10px', fontSize:13, width:'100%',
+}
 
 export default function SerieSelector({ index, onSelect, globalFreq }) {
-  const [repo,       setRepo]       = useState('')
-  const [fuentes,    setFuentes]    = useState([])
-  const [fuente,     setFuente]     = useState('')
-  const [frecuencias,setFrecuencias]= useState([])
-  const [frecuencia, setFrecuencia] = useState('')
-  const [series,     setSeries]     = useState([])
-  const [serie,      setSerie]      = useState(null)
-  const [label,      setLabel]      = useState('')
-  const [loading,    setLoading]    = useState(false)
-  const [error,      setError]      = useState('')
+  const [repo,        setRepo]        = useState('')
+  const [fuentes,     setFuentes]     = useState([])
+  const [fuente,      setFuente]      = useState('')
+  const [frecuencias, setFrecuencias] = useState([])
+  const [frecuencia,  setFrecuencia]  = useState('')
+  const [series,      setSeries]      = useState([])
+  const [serie,       setSerie]       = useState(null)
+  const [label,       setLabel]       = useState('')
+  const [periodos,    setPeriodos]    = useState(null)   // { desde, hasta } de la serie elegida
+  const [loadingP,    setLoadingP]    = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState('')
 
-  // Sync con frecuencia global
   useEffect(() => {
     if (globalFreq && frecuencias.includes(globalFreq) && frecuencia !== globalFreq) {
       loadSeries(fuente, globalFreq)
@@ -33,7 +36,7 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
   const reset = (level) => {
     if (level <= 1) { setFuente(''); setFuentes([]) }
     if (level <= 2) { setFrecuencias([]); setFrecuencia('') }
-    if (level <= 3) { setSeries([]); setSerie(null) }
+    if (level <= 3) { setSeries([]); setSerie(null); setPeriodos(null) }
     setError('')
   }
 
@@ -60,7 +63,7 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
   }
 
   const loadSeries = async (fVal, frVal) => {
-    setFrecuencia(frVal); setSeries([]); setSerie(null)
+    setFrecuencia(frVal); setSeries([]); setSerie(null); setPeriodos(null)
     setLoading(true)
     try {
       const data = await getSeries(repo, fVal || fuente, frVal)
@@ -69,38 +72,54 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
     finally { setLoading(false) }
   }
 
-  const onSerie = (s) => {
-    setSerie(s)
+  // Al elegir serie → consultar períodos disponibles automáticamente
+  const onSerie = async (s) => {
+    setSerie(s); setPeriodos(null)
     if (!label) setLabel(s.serie_nombre.slice(0, 42))
+    setLoadingP(true)
+    try {
+      const p = await getPeriodos(repo, fuente, frecuencia,
+        s.serie_nombre_original || s.serie_nombre, s.meta_idx ?? undefined)
+      setPeriodos(p)
+    } catch (e) {
+      setPeriodos(null)
+    } finally {
+      setLoadingP(false)
+    }
   }
 
   const handleAdd = () => {
     if (!serie || !label.trim()) return
     onSelect({
       repo, fuente, frecuencia,
-      serie:       serie.serie_nombre_original || serie.serie_nombre,
-      serie_nombre:serie.serie_nombre,
-      label:       label.trim(),
-      meta_idx:    serie.meta_idx ?? null,
-      unidad:      serie.unidad || '',
+      serie:        serie.serie_nombre_original || serie.serie_nombre,
+      serie_nombre: serie.serie_nombre,
+      label:        label.trim(),
+      meta_idx:     serie.meta_idx ?? null,
+      unidad:       serie.unidad || '',
+      periodos,     // { desde, hasta } — se usa para validar coincidencia
     })
-    // Reset para siguiente selección
-    setSerie(null); setLabel('')
+    setSerie(null); setLabel(''); setPeriodos(null)
   }
 
   const fKey   = f => f.fuente || f.cuadro || ''
   const fLabel = f => f.nombre || f.fuente_nombre || f.cuadro_nombre || f.cuadro || ''
 
   return (
-    <div className="rounded-xl p-4 space-y-2.5 fade-up"
-         style={{ background:'var(--ink-900)', border:'1px solid var(--ink-700)' }}>
+    <div style={{ background:'var(--ink-900)', border:'1px solid var(--ink-700)',
+                  borderRadius:12, padding:14, display:'flex', flexDirection:'column', gap:8 }}
+         className="fade-up">
 
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-mono font-bold"
-              style={{ background:'var(--ink-700)', color:'var(--gold)' }}>{index + 1}</span>
-        <span className="text-xs" style={{ color:'#55556a' }}>Serie</span>
-        {loading && <span className="text-xs pulse-dot ml-auto" style={{ color:'#44446a' }}>cargando…</span>}
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{
+          width:20, height:20, borderRadius:'50%', fontSize:11, fontWeight:'bold',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          background:'var(--ink-700)', color:'var(--gold)',
+          fontFamily:'"JetBrains Mono",monospace', flexShrink:0,
+        }}>{index + 1}</span>
+        <span style={{ fontSize:12, color:'#55556a' }}>Serie</span>
+        {loading && <span style={{ fontSize:11, color:'#44446a', marginLeft:'auto' }} className="pulse-dot">cargando…</span>}
       </div>
 
       {/* Fuente de datos */}
@@ -136,9 +155,36 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
         </select>
       )}
 
-      {/* Label + agregar */}
+      {/* Rango de períodos disponibles de la serie */}
       {serie && (
-        <div className="flex gap-2">
+        <div style={{
+          padding:'8px 12px', borderRadius:8, fontSize:12,
+          background:'var(--ink-800)', border:'1px solid var(--ink-700)',
+          display:'flex', alignItems:'center', gap:8,
+        }}>
+          <CalIcon />
+          {loadingP ? (
+            <span style={{ color:'#44446a' }} className="pulse-dot">Consultando períodos…</span>
+          ) : periodos?.desde ? (
+            <>
+              <span style={{ color:'#88889a' }}>Disponible:</span>
+              <span style={{ color:'var(--teal)', fontFamily:'"JetBrains Mono",monospace', fontWeight:500 }}>
+                {periodos.desde}
+              </span>
+              <span style={{ color:'#44446a' }}>→</span>
+              <span style={{ color:'var(--teal)', fontFamily:'"JetBrains Mono",monospace', fontWeight:500 }}>
+                {periodos.hasta}
+              </span>
+            </>
+          ) : (
+            <span style={{ color:'#44446a' }}>Sin datos de período</span>
+          )}
+        </div>
+      )}
+
+      {/* Label + Agregar */}
+      {serie && (
+        <div style={{ display:'flex', gap:8 }}>
           <input
             value={label}
             onChange={e => setLabel(e.target.value)}
@@ -149,13 +195,24 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
           <button
             onClick={handleAdd}
             disabled={!label.trim()}
-            className="px-4 py-1.5 rounded-lg text-sm font-semibold disabled:opacity-40 transition-opacity"
-            style={{ background:'var(--gold)', color:'#000', whiteSpace:'nowrap' }}
+            style={{
+              background:'var(--gold)', color:'#000', borderRadius:8,
+              padding:'6px 14px', fontSize:13, fontWeight:600, cursor:'pointer',
+              border:'none', whiteSpace:'nowrap', opacity: !label.trim() ? .4 : 1,
+            }}
           >+ Agregar</button>
         </div>
       )}
 
-      {error && <p className="text-xs" style={{ color:'var(--coral)' }}>{error}</p>}
+      {error && <p style={{ fontSize:11, color:'var(--coral)', margin:0 }}>{error}</p>}
     </div>
   )
 }
+
+const CalIcon = () => (
+  <svg style={{ width:13, height:13, flexShrink:0, color:'var(--teal)' }}
+       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+  </svg>
+)

@@ -29,14 +29,14 @@ export default function DatasetTab({ dataset }) {
       <div style={{
         flexShrink:0, padding:'10px 20px',
         display:'flex', alignItems:'center', justifyContent:'space-between', gap:12,
-        background:'var(--ink-900)', borderBottom:'1px solid var(--ink-800)',
+        background:"var(--ink-900)", borderBottom:'1px solid var(--border)',
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:16, minWidth:0 }}>
           <div style={{ minWidth:0 }}>
-            <div style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:18, color:'#fff', lineHeight:1.2 }}>
+            <div style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:18, color:'var(--text-primary)', lineHeight:1.2 }}>
               {dataset.nombre}
             </div>
-            <div style={{ fontSize:11, color:'#44446a', marginTop:2 }}>
+            <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:2 }}>
               {dataset.desde} → {dataset.hasta} · {dataset.frecuencia} · {data.length} períodos · {cols.length} series
             </div>
           </div>
@@ -63,14 +63,14 @@ export default function DatasetTab({ dataset }) {
       {/* ── View selector ── */}
       <div style={{
         flexShrink:0, padding:'6px 20px', display:'flex', gap:4,
-        borderBottom:'1px solid var(--ink-800)',
+        borderBottom:'1px solid var(--border)',
       }}>
         {[['chart','Gráfico',<ChartSvg/>],['table','Tabla',<TableSvg/>],['info','Metadata',<InfoSvg/>]]
           .map(([id, lbl, ico]) => (
           <button key={id} onClick={() => setView(id)} style={{
             display:'flex', alignItems:'center', gap:6,
             padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:500, cursor:'pointer',
-            background: view===id ? 'var(--ink-800)' : 'transparent',
+            background: view===id ? "var(--ink-800)" : 'transparent',
             color: view===id ? '#e8e8f0' : '#44446a',
             border: view===id ? '1px solid var(--ink-700)' : '1px solid transparent',
             transition:'all 0.12s',
@@ -105,13 +105,13 @@ function TableView({ data, cols }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', gap:10 }}>
-      <div style={{ flex:1, overflow:'auto', borderRadius:10, border:'1px solid var(--ink-800)' }}>
+      <div style={{ flex:1, overflow:'auto', borderRadius:10, border:'1px solid var(--border)' }}>
         <table style={{ width:'100%', fontSize:12, borderCollapse:'collapse' }}>
           <thead>
-            <tr style={{ background:'var(--ink-900)', position:'sticky', top:0 }}>
-              <th style={{ textAlign:'left', padding:'10px 14px', color:'#55556a', fontWeight:500, borderBottom:'1px solid var(--ink-800)' }}>Período</th>
+            <tr style={{ background:"var(--ink-900)", position:'sticky', top:0 }}>
+              <th style={{ textAlign:'left', padding:'10px 14px', color:'var(--text-muted)', fontWeight:500, borderBottom:'1px solid var(--border)' }}>Período</th>
               {cols.map(c => (
-                <th key={c.label} style={{ textAlign:'right', padding:'10px 14px', color:'#55556a', fontWeight:500, whiteSpace:'nowrap', borderBottom:'1px solid var(--ink-800)' }}>
+                <th key={c.label} style={{ textAlign:'right', padding:'10px 14px', color:'var(--text-muted)', fontWeight:500, whiteSpace:'nowrap', borderBottom:'1px solid var(--border)' }}>
                   {c.label}{c.unidad && <span style={{ opacity:.4, marginLeft:4 }}>({c.unidad})</span>}
                 </th>
               ))}
@@ -120,11 +120,11 @@ function TableView({ data, cols }) {
           <tbody>
             {rows.map((row, i) => (
               <tr key={row.periodo||i} style={{ borderBottom:'1px solid var(--ink-900)' }}
-                  onMouseEnter={e => e.currentTarget.style.background='var(--ink-900)'}
+                  onMouseEnter={e => e.currentTarget.style.background="var(--ink-900)"}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}>
                 <td style={{ padding:'8px 14px', fontFamily:'"JetBrains Mono",monospace', color:'var(--gold)', borderRight:'1px solid var(--ink-800)' }}>{row.periodo}</td>
                 {cols.map(c => (
-                  <td key={c.label} style={{ padding:'8px 14px', textAlign:'right', fontFamily:'"JetBrains Mono",monospace', color:'#c8c8d8' }}>
+                  <td key={c.label} style={{ padding:'8px 14px', textAlign:'right', fontFamily:'"JetBrains Mono",monospace', color:'var(--text-secondary)' }}>
                     {fmt(row[c.label])}
                   </td>
                 ))}
@@ -135,12 +135,12 @@ function TableView({ data, cols }) {
       </div>
       {total > 1 && (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-          <span style={{ fontSize:11, color:'#44446a' }}>{page*PS+1}–{Math.min((page+1)*PS, data.length)} de {data.length}</span>
+          <span style={{ fontSize:11, color:'var(--text-muted)' }}>{page*PS+1}–{Math.min((page+1)*PS, data.length)} de {data.length}</span>
           <div style={{ display:'flex', gap:4 }}>
             {[['«',0],['‹',page-1]].map(([l,t]) => (
               <PagBtn key={l} onClick={() => setPage(Math.max(0,t))} disabled={page===0} label={l} />
             ))}
-            <span style={{ padding:'4px 10px', fontSize:11, color:'#44446a' }}>{page+1}/{total}</span>
+            <span style={{ padding:'4px 10px', fontSize:11, color:'var(--text-muted)' }}>{page+1}/{total}</span>
             {[['›',page+1],['»',total-1]].map(([l,t]) => (
               <PagBtn key={l} onClick={() => setPage(Math.min(total-1,t))} disabled={page>=total-1} label={l} />
             ))}
@@ -155,8 +155,8 @@ function TableView({ data, cols }) {
 function MetaView({ dataset, cols }) {
   return (
     <div style={{ overflowY:'auto', height:'100%', display:'flex', flexDirection:'column', gap:16 }}>
-      <div style={{ padding:16, borderRadius:10, background:'var(--ink-900)', border:'1px solid var(--ink-800)' }}>
-        <div style={{ fontSize:13, fontWeight:600, color:'#fff', marginBottom:12 }}>Parámetros del Dataset</div>
+      <div style={{ padding:16, borderRadius:10, background:"var(--ink-900)", border:'1px solid var(--border)' }}>
+        <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)', marginBottom:12 }}>Parámetros del Dataset</div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
           {[['Nombre',dataset.nombre],['Frecuencia',dataset.frecuencia],
             ['Período',`${dataset.desde} → ${dataset.hasta}`],
@@ -164,27 +164,27 @@ function MetaView({ dataset, cols }) {
             ['Observaciones',`${dataset.result?.data?.length||0} períodos`]
           ].map(([k,v]) => (
             <div key={k}>
-              <div style={{ fontSize:11, color:'#44446a' }}>{k}</div>
-              <div style={{ fontSize:13, color:'#c8c8d8', marginTop:2 }}>{v}</div>
+              <div style={{ fontSize:11, color:'var(--text-muted)' }}>{k}</div>
+              <div style={{ fontSize:13, color:'var(--text-secondary)', marginTop:2 }}>{v}</div>
             </div>
           ))}
         </div>
       </div>
       <div>
-        <div style={{ fontSize:13, fontWeight:600, color:'#fff', marginBottom:10 }}>Series</div>
+        <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)', marginBottom:10 }}>Series</div>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {cols.map((c, i) => {
             const color = RC[c.repo]||'#88889a'
             const ref   = dataset.series?.[i]
             return (
-              <div key={c.label} style={{ padding:12, borderRadius:10, background:'var(--ink-900)', border:`1px solid ${color}28` }}>
+              <div key={c.label} style={{ padding:12, borderRadius:10, background:"var(--ink-900)", border:`1px solid ${color}28` }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: ref ? 8 : 0 }}>
                   <span style={{ width:8, height:8, borderRadius:'50%', background:color, flexShrink:0 }} />
-                  <span style={{ fontSize:13, fontWeight:500, color:'#fff', flex:1 }}>{c.label}</span>
+                  <span style={{ fontSize:13, fontWeight:500, color:'var(--text-primary)', flex:1 }}>{c.label}</span>
                   <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:color+'18', color }}>{RL[c.repo]||c.repo}</span>
                 </div>
                 {ref && (
-                  <div style={{ fontSize:11, color:'#55556a', paddingLeft:16, display:'flex', flexDirection:'column', gap:2 }}>
+                  <div style={{ fontSize:11, color:'var(--text-muted)', paddingLeft:16, display:'flex', flexDirection:'column', gap:2 }}>
                     <span>Fuente: {ref.fuente}</span>
                     <span>Serie: {ref.serie}</span>
                     {c.unidad && <span>Unidad: {c.unidad}</span>}
@@ -204,7 +204,7 @@ const ExportBtn = ({ onClick, disabled, label }) => (
   <button onClick={onClick} disabled={disabled} style={{
     display:'flex', alignItems:'center', gap:6, padding:'6px 12px',
     borderRadius:8, fontSize:12, fontWeight:500, cursor: disabled ? 'not-allowed' : 'pointer',
-    background:'var(--ink-800)', border:'1px solid var(--ink-700)', color:'#88889a',
+    background:"var(--ink-800)", border:'1px solid var(--border-subtle)', color:'var(--text-secondary)',
     opacity: disabled ? .4 : 1, transition:'border-color 0.12s',
   }}
   onMouseEnter={e => { if(!disabled) e.currentTarget.style.borderColor='var(--gold)' }}
@@ -216,7 +216,7 @@ const ExportBtn = ({ onClick, disabled, label }) => (
 const PagBtn = ({ onClick, disabled, label }) => (
   <button onClick={onClick} disabled={disabled} style={{
     padding:'4px 8px', borderRadius:6, fontSize:12, cursor: disabled?'not-allowed':'pointer',
-    background:'var(--ink-800)', color:'#88889a', border:'none', opacity: disabled?.3:1,
+    background:"var(--ink-800)", color:'var(--text-secondary)', border:'none', opacity: disabled?.3:1,
   }}>{label}</button>
 )
 

@@ -9,8 +9,8 @@ const REPOS = [
 ]
 
 const S = {
-  background:'var(--ink-800)', border:'1px solid var(--ink-700)',
-  color:'#c8c8d8', borderRadius:8, padding:'6px 10px', fontSize:13, width:'100%',
+  background:'var(--surface-raised)', border:'1px solid var(--border-subtle)',
+  color:'var(--text-secondary)', borderRadius:8, padding:'6px 10px', fontSize:13, width:'100%',
 }
 
 export default function SerieSelector({ index, onSelect, globalFreq }) {
@@ -106,7 +106,7 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
   const fLabel = f => f.nombre || f.fuente_nombre || f.cuadro_nombre || f.cuadro || ''
 
   return (
-    <div style={{ background:'var(--ink-900)', border:'1px solid var(--ink-700)',
+    <div style={{ background:'var(--surface)', border:'1px solid var(--border-subtle)',
                   borderRadius:12, padding:14, display:'flex', flexDirection:'column', gap:8 }}
          className="fade-up">
 
@@ -118,8 +118,8 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
           background:'var(--ink-700)', color:'var(--gold)',
           fontFamily:'"JetBrains Mono",monospace', flexShrink:0,
         }}>{index + 1}</span>
-        <span style={{ fontSize:12, color:'#55556a' }}>Serie</span>
-        {loading && <span style={{ fontSize:11, color:'#44446a', marginLeft:'auto' }} className="pulse-dot">cargando…</span>}
+        <span style={{ fontSize:12, color:'var(--text-muted)' }}>Serie</span>
+        {loading && <span style={{ fontSize:11, color:'var(--text-muted)', marginLeft:'auto' }} className="pulse-dot">cargando…</span>}
       </div>
 
       {/* Fuente de datos */}
@@ -159,25 +159,25 @@ export default function SerieSelector({ index, onSelect, globalFreq }) {
       {serie && (
         <div style={{
           padding:'8px 12px', borderRadius:8, fontSize:12,
-          background:'var(--ink-800)', border:'1px solid var(--ink-700)',
+          background:'var(--surface-raised)', border:'1px solid var(--border-subtle)',
           display:'flex', alignItems:'center', gap:8,
         }}>
           <CalIcon />
           {loadingP ? (
-            <span style={{ color:'#44446a' }} className="pulse-dot">Consultando períodos…</span>
+            <span style={{ color:'var(--text-muted)' }} className="pulse-dot">Consultando períodos…</span>
           ) : periodos?.desde ? (
             <>
-              <span style={{ color:'#88889a' }}>Disponible:</span>
+              <span style={{ color:'var(--text-secondary)' }}>Disponible:</span>
               <span style={{ color:'var(--teal)', fontFamily:'"JetBrains Mono",monospace', fontWeight:500 }}>
                 {periodos.desde}
               </span>
-              <span style={{ color:'#44446a' }}>→</span>
+              <span style={{ color:'var(--text-muted)' }}>→</span>
               <span style={{ color:'var(--teal)', fontFamily:'"JetBrains Mono",monospace', fontWeight:500 }}>
                 {periodos.hasta}
               </span>
             </>
           ) : (
-            <span style={{ color:'#44446a' }}>Sin datos de período</span>
+            <span style={{ color:'var(--text-muted)' }}>Sin datos de período</span>
           )}
         </div>
       )}

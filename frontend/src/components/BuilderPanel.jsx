@@ -114,10 +114,10 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
         borderRight:'1px solid var(--ink-800)', maxWidth:540,
       }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <h2 style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:16, color:'#fff', margin:0 }}>
+          <h2 style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:16, color:'var(--text-primary)', margin:0 }}>
             Seleccionar Series
           </h2>
-          <span style={{ fontSize:11, fontFamily:'"JetBrains Mono",monospace', color:'#44446a' }}>
+          <span style={{ fontSize:11, fontFamily:'"JetBrains Mono",monospace', color:'var(--text-muted)' }}>
             {series.length}/{MAX_SERIES}
           </span>
         </div>
@@ -130,8 +130,8 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
           <button
             onClick={() => setNSel(c => c + 1)}
             style={{
-              background:'var(--ink-900)', border:'1px dashed var(--ink-600)',
-              borderRadius:10, padding:'9px 0', fontSize:13, color:'#44446a',
+              background:'var(--surface)', border:'1px dashed var(--ink-600)',
+              borderRadius:10, padding:'9px 0', fontSize:13, color:'var(--text-muted)',
               cursor:'pointer', transition:'border-color 0.15s',
             }}
             onMouseEnter={e => e.currentTarget.style.borderColor='var(--gold)'}
@@ -145,10 +145,10 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
       {/* ── Columna derecha: Configuración ── */}
       <div style={{
         width:300, flexShrink:0, overflowY:'auto', padding:20,
-        background:'var(--ink-900)',
+        background:'var(--surface)',
         display:'flex', flexDirection:'column', gap:18,
       }}>
-        <h2 style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:16, color:'#fff', margin:0 }}>
+        <h2 style={{ fontFamily:'"DM Serif Display",Georgia,serif', fontSize:16, color:'var(--text-primary)', margin:0 }}>
           Configurar Dataset
         </h2>
 
@@ -208,11 +208,11 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
 
           <div style={{ display:'flex', gap:8 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11, color:'#44446a', marginBottom:4 }}>Desde</div>
+              <div style={{ fontSize:11, color:'var(--text-muted)', marginBottom:4 }}>Desde</div>
               <input type="date" value={desde} onChange={e => setDesde(e.target.value)} style={INPUT} />
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:11, color:'#44446a', marginBottom:4 }}>Hasta</div>
+              <div style={{ fontSize:11, color:'var(--text-muted)', marginBottom:4 }}>Hasta</div>
               <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} style={INPUT} />
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
                 return (
                   <div key={s.label} style={{
                     display:'flex', alignItems:'flex-start', gap:8, padding:'8px 10px',
-                    borderRadius:8, background:'var(--ink-800)',
+                    borderRadius:8, background:'var(--surface-raised)',
                     border: tieneConflicto
                       ? '1px solid var(--coral)28'
                       : '1px solid var(--ink-700)',
@@ -238,11 +238,11 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
                       background: REPO_C[s.repo] || '#88889a',
                     }} />
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12, fontWeight:500, color:'#fff',
+                      <div style={{ fontSize:12, fontWeight:500, color:'var(--text-primary)',
                                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                         {s.label}
                       </div>
-                      <div style={{ fontSize:11, color:'#44446a', marginTop:1 }}>
+                      <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:1 }}>
                         {REPO_L[s.repo]} · {s.frecuencia}
                       </div>
                       {/* Período disponible de esta serie */}
@@ -259,7 +259,7 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
                     </div>
                     <button onClick={() => removeSerie(s.label)} style={{
                       flexShrink:0, background:'none', border:'none',
-                      color:'#44446a', cursor:'pointer', fontSize:16, lineHeight:1, padding:2,
+                      color:'var(--text-muted)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2,
                     }}
                     onMouseEnter={e => e.currentTarget.style.color='var(--coral)'}
                     onMouseLeave={e => e.currentTarget.style.color='#44446a'}
@@ -315,13 +315,13 @@ export default function BuilderPanel({ onSave, savedCount, max }) {
 }
 
 const INPUT = {
-  background:'var(--ink-800)', border:'1px solid var(--ink-700)',
-  color:'#e8e8f0', borderRadius:8, padding:'7px 10px', fontSize:13, width:'100%',
+  background:'var(--surface-raised)', border:'1px solid var(--border-subtle)',
+  color:'var(--text-primary)', borderRadius:8, padding:'7px 10px', fontSize:13, width:'100%',
 }
 
 const Field = ({ label, children }) => (
   <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-    <div style={{ fontSize:11, fontWeight:500, color:'#55556a', letterSpacing:'.04em' }}>{label}</div>
+    <div style={{ fontSize:11, fontWeight:500, color:'var(--text-muted)', letterSpacing:'.04em' }}>{label}</div>
     {children}
   </div>
 )

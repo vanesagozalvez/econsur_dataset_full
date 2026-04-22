@@ -60,6 +60,23 @@ def get_conn(db_key: str) -> sqlite3.Connection:
         raise HTTPException(400, detail=f"db_key='{db_key}' inválido.")
     if not path.exists():
         raise HTTPException(503, detail=f"Base '{path.name}' no disponible.")
+    # Detectar archivos Git LFS (punteros de texto en lugar del binario real)
+    # Un archivo LFS pesa menos de 200 bytes y empieza con "version https://git-lfs"
+    if path.stat().st_size < 512:
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+            if "git-lfs" in content:
+                raise HTTPException(
+                    503,
+                    detail=(
+                        f"'{path.name}' es un puntero Git LFS, no la base real. "
+                        "El repo usa Git LFS. Ver README para instrucciones de descarga."
+                    )
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
     return conn
@@ -420,9 +437,13 @@ def _fetch_rows(repo, fuente, frecuencia, serie, meta_idx=None, desde=None, hast
         freq_native = frecuencia.upper() if db_key == "comercio2" else frecuencia
         conn = get_conn(db_key)
         try:
+            # Usar GROUP BY periodo para garantizar un único valor por período.
+            # Cuando hay múltiples unidades (ej: IPMP en USD y ARS), toma el primer
+            # registro según rowid — conserva el valor original sin alterar nada.
             rows = conn.execute(
                 f"SELECT periodo, valor, serie_nombre FROM {table} "
-                "WHERE hoja_origen=? AND frecuencia=? AND serie_nombre=?" + psql + " ORDER BY periodo",
+                "WHERE hoja_origen=? AND frecuencia=? AND serie_nombre=?" + psql +
+                " GROUP BY periodo ORDER BY periodo",
                 [fuente, freq_native, serie] + pparams).fetchall()
         finally:
             conn.close()
@@ -434,13 +455,13 @@ def _fetch_rows(repo, fuente, frecuencia, serie, meta_idx=None, desde=None, hast
         db_key, table = info
         conn = get_conn(db_key)
         try:
-            # Verificar si la tabla tiene columna 'unidad'
             cols_info = conn.execute(f"PRAGMA table_info({table})").fetchall()
             has_unidad = any(c["name"] == "unidad" for c in cols_info)
             select_cols = "periodo, valor, unidad" if has_unidad else "periodo, valor"
             rows = conn.execute(
                 f"SELECT {select_cols} FROM {table} "
-                "WHERE ho_origen=? AND frecuencia=? AND serie_nombre=?" + psql + " ORDER BY periodo",
+                "WHERE ho_origen=? AND frecuencia=? AND serie_nombre=?" + psql +
+                " GROUP BY periodo ORDER BY periodo",
                 [fuente, frecuencia, serie] + pparams).fetchall()
         finally:
             conn.close()
@@ -458,7 +479,8 @@ def _fetch_rows(repo, fuente, frecuencia, serie, meta_idx=None, desde=None, hast
             select_cols = "periodo, valor, unidad" if has_unidad else "periodo, valor"
             rows = conn.execute(
                 f"SELECT {select_cols} FROM {table} "
-                "WHERE hoja_origen=? AND frecuencia=? AND serie_nombre=?" + psql + " ORDER BY periodo",
+                "WHERE hoja_origen=? AND frecuencia=? AND serie_nombre=?" + psql +
+                " GROUP BY periodo ORDER BY periodo",
                 [fuente, frecuencia, serie] + pparams).fetchall()
         finally:
             conn.close()
@@ -494,6 +516,19 @@ class DatasetRequest(BaseModel):
     hasta: str
     frecuencia: str
 
+def _clean_value(v):
+    """Convierte NaN/Inf a None para que sea JSON-serializable."""
+    if v is None:
+        return None
+    try:
+        import math
+        f = float(v)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    except (TypeError, ValueError):
+        return v
+
 @app.post("/api/dataset/build")
 def build_dataset(req: DatasetRequest):
     if len(req.series) > 20:
@@ -507,17 +542,39 @@ def build_dataset(req: DatasetRequest):
             if not rows: continue
             df = pd.DataFrame(rows)
             df["periodo"] = pd.to_datetime(df["periodo"], errors="coerce")
-            df = df.dropna(subset=["periodo", "valor"])
+            df = df.dropna(subset=["periodo"])
+            df["valor"] = pd.to_numeric(df["valor"], errors="coerce")
             df = df.set_index("periodo")[["valor"]].rename(columns={"valor": ref.label})
+
+            # ── Resolver períodos duplicados ──────────────────────────────
+            # Causa: algunas tablas guardan la misma serie en múltiples unidades
+            # (ej: IPMP en dólares Y en pesos) con el mismo serie_nombre y período.
+            # Solución: conservar el PRIMER registro por período — sin alterar valores.
+            if df.index.duplicated().any():
+                n_dupes = df.index.duplicated(keep='first').sum()
+                log.warning(
+                    f"Serie '{ref.label}': {n_dupes} períodos duplicados en la BD "
+                    f"(probablemente múltiples unidades). Se conserva el primer registro."
+                )
+                df = df[~df.index.duplicated(keep='first')]
+
             dfs.append(df)
-            result["columnas"].append({"label": ref.label, "repo": ref.repo, "serie": ref.serie,
-                                       "unidad": rows[0].get("unidad", "") if rows else ""})
+            unidad = rows[0].get("unidad", "") if isinstance(rows[0], dict) \
+                     else dict(rows[0]).get("unidad", "")
+            result["columnas"].append({"label": ref.label, "repo": ref.repo,
+                                       "serie": ref.serie, "unidad": unidad})
         except Exception as e:
             log.warning(f"Error fetching {ref.serie}: {e}")
+
     if dfs:
-        merged = pd.concat(dfs, axis=1).sort_index()
+        merged = pd.concat(dfs, axis=1, join="outer").sort_index()
         merged.index = merged.index.strftime("%Y-%m-%d")
-        result["data"] = merged.reset_index().rename(columns={"index": "periodo"}).to_dict(orient="records")
+        records = merged.reset_index().rename(columns={"index": "periodo"}).to_dict(orient="records")
+        clean_records = [
+            {k: _clean_value(v) if k != "periodo" else v for k, v in record.items()}
+            for record in records
+        ]
+        result["data"] = clean_records
     return result
 
 @app.post("/api/dataset/export/csv")

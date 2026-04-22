@@ -61,23 +61,21 @@ const Toggle = ({ active, onClick, color, icon, label, title }) => (
 )
 
 // ── Tipografías más grandes para el gráfico ──────────────────────────────────
-const FONT_WEB    = { family:'Arial,Helvetica,sans-serif', size:15 }
-const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:28 }
-const TICK_WEB    = { size:17 }
-const TICK_EXPORT = { size:24 }
+const FONT_WEB    = { family:'Arial,Helvetica,sans-serif', size:13 }
+const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:19 }   // +50% vs 13
+const TICK_WEB    = { size:12 }
+const TICK_EXPORT = { size:19 }   // +50%
 
 function buildEditorialLayout({ forExport, isDark, hasDual, palette,
-                                  nombre, desde, hasta,
-                                  autoRange1, autoRange2, yRange1, yRange2,
-                                  chartDesde, chartHasta }) {
-  const bg        = forExport || !isDark ? CREAM      : 'transparent'
+                                 nombre, desde, hasta,
+                                 autoRange1, autoRange2, yRange1, yRange2,
+                                 chartDesde, chartHasta }) {
+  const bg       = forExport || !isDark ? CREAM      : 'transparent'
   const paperBg  = forExport || !isDark ? CREAM      : 'transparent'
   const axisLine = forExport || !isDark ? '#888070'  : '#44446a'
   const tickCol  = forExport || !isDark ? '#6a6050'  : '#88889a'
   const gridCol  = forExport || !isDark ? CREAM_GRID : '#1a1a28'
   const fontFam  = 'Arial,Helvetica,sans-serif'
-  
-  // Usamos las constantes que definiste arriba del script
   const tickSize = forExport ? TICK_EXPORT.size : TICK_WEB.size
   const fontBase = forExport ? FONT_EXPORT : FONT_WEB
 
@@ -85,28 +83,44 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     showgrid: true, gridcolor: gridCol, gridwidth: forExport ? 0.8 : 0.5,
     showline: false, zeroline: true,
     zerolinecolor: forExport || !isDark ? '#aaa090' : '#2a2a40',
-    zerolinewidth: forExport ? 1 : 0.5,
+    zerolinewidth: forExport ? 1.5 : 0.5,
     tickfont: { family: fontFam, size: tickSize, color: tickCol },
-    tickcolor: axisLine, ticks: 'outside', ticklen: 4, tickwidth: 1,
+    tickcolor: axisLine,
+    ticks: 'outside',
+    ticklen: forExport ? 6 : 4,
+    tickwidth: forExport ? 2 : 1,
   }
-
   const xAxisBase = {
-    showgrid: false, showline: true,
-    linecolor: axisLine, linewidth: forExport ? 1.5 : 1,
+    showgrid: false,
+    showline: true,
+    linecolor: axisLine,
+    linewidth: forExport ? 2.5 : 1,   // eje X más grueso en exportación
     mirror: false, zeroline: false,
     tickfont: { family: fontFam, size: tickSize, color: tickCol },
-    tickcolor: axisLine, ticks: 'outside', ticklen: 4, tickwidth: 1,
+    tickcolor: axisLine,
+    ticks: 'outside',
+    ticklen: forExport ? 6 : 4,
+    tickwidth: forExport ? 2 : 1,
     ...(chartDesde ? { range: [chartDesde, chartHasta || undefined] } : {}),
   }
+
+  // ── Header exportación: solo título + ECONSUR RESEARCH ───────────────────
+  // Margen superior reducido (header pequeño = más espacio para el gráfico)
+  // La línea divisora se ubica justo bajo el texto, sin invadir el plot area
+  const headerH  = forExport ? 52 : 16   // altura del header en px (paper coordinates)
+  // En paper coords (0–1), el plot area empieza después del margen t
+  // Con margin.t = 52 sobre height=700 → plot top en paper = 1 - 52/700 ≈ 0.926
+  // Ponemos la línea a y = 1.0 en domain de paper pero dentro del margen
+  const divLineY = forExport ? 0.956 : undefined  // ajustado para no solaparse
 
   return {
     paper_bgcolor: paperBg, plot_bgcolor: bg,
     font: { ...fontBase, color: tickCol },
-    margin: { 
-      t: forExport ? 110 : 16, 
-      r: hasDual ? 75 : (forExport ? 40 : 16), 
-      b: forExport ? 90 : 52, 
-      l: forExport ? 75 : 65 
+    margin: {
+      t: forExport ? 52  : 16,    // header reducido
+      r: hasDual  ? 90  : (forExport ? 40 : 16),
+      b: forExport ? 90  : 52,
+      l: forExport ? 90  : 65,
     },
     xaxis: { ...xAxisBase },
     yaxis: {
@@ -124,31 +138,53 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
       ...((!autoRange2 && yRange2) ? { range: yRange2 } : {}),
     }} : {}),
     legend: {
-      x: 0, 
-      y: forExport ? -0.18 : -0.25, 
+      x: 0,
+      y: forExport ? -0.13 : -0.20,
       orientation: 'h',
       bgcolor: 'transparent',
-      // CORREGIDO: ahora sí lee el tamaño de FONT_EXPORT
-      font: { family: fontFam, size: forExport ? fontBase.size : 11, color: tickCol },
+      font: { family: fontFam, size: forExport ? 17 : 11, color: tickCol },
+    },
+    hovermode: 'x unified',
+    hoverlabel: {
+      bgcolor:     forExport || !isDark ? '#ffffff' : '#1a1a2e',
+      bordercolor: forExport || !isDark ? '#ccbbaa' : '#44446a',
+      font: { family: fontFam, size: 13, color: forExport || !isDark ? '#1a1a1a' : '#e8e8f0' },
     },
     ...(forExport ? {
       annotations: [
-        { xref:'paper', yref:'paper', x:0, y:1.12, xanchor:'left', yanchor:'bottom',
-          text:'<b>ECONSUR · DATASET STUDIO</b>',
-          font:{ family: fontFam, size: 20, color:'#3a3020' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:0, y:1.04, xanchor:'left', yanchor:'bottom',
-          text:`${nombre?.toUpperCase()} (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
-          font:{ family: fontFam, size: 18, color:'#6a6050' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:1, y:1.12, xanchor:'right', yanchor:'bottom',
-          text:'ECONSUR RESEARCH',
-          font:{ family: fontFam, size: 14, color:'#9a8a70' }, showarrow:false },
+        // Título del dataset — alineado a la izquierda, en el margen superior
+        {
+          xref:'paper', yref:'paper',
+          x: 0, y: 1.0,
+          xanchor:'left', yanchor:'bottom',
+          text: `${nombre?.toUpperCase()}  (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
+          font:{ family: fontFam, size: 16, color:'#5a5040', weight:'bold' },
+          showarrow: false,
+        },
+        // ECONSUR RESEARCH — esquina derecha
+        {
+          xref:'paper', yref:'paper',
+          x: 1, y: 1.0,
+          xanchor:'right', yanchor:'bottom',
+          text: 'ECONSUR RESEARCH',
+          font:{ family: fontFam, size: 13, color:'#9a8a70' },
+          showarrow: false,
+        },
       ],
-      // LÍNEA ELIMINADA POR COMPLETO
-      shapes: [], 
+      shapes: [
+        // Línea divisora: en paper coords, y=divLineY está dentro del margen t
+        // margin.t=52, height=700 → top del plot en paper = 1 - 52/700 = 0.9257
+        // Ponemos la línea en y=0.958 (entre el texto y el borde del plot)
+        {
+          type: 'line', xref: 'paper', yref: 'paper',
+          x0: 0, x1: 1,
+          y0: divLineY, y1: divLineY,
+          line:{ color:'#8a7a60', width: 1 },
+        },
+      ],
     } : {}),
   }
 }
-
 
 function buildTraces({ data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
                        ajusteS1, ajusteS2, palette, forExport,
@@ -166,7 +202,7 @@ function buildTraces({ data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
     if (!lbl) return
     const ys    = getValues(lbl, ajustar)
     const color = palette[ci % palette.length]
-    const lw    = forExport ? 2 : 2.5
+    const lw    = forExport ? 3.5 : 2.5
     const nameLabel = ajustar && s3 ? `${lbl} ÷ ${s3}` : lbl
     // Respetar visibilidad que el usuario activó/desactivó en la leyenda
     const isHidden = hiddenTraces.includes(nameLabel) || hiddenTraces.includes(lbl)
@@ -188,7 +224,7 @@ function buildTraces({ data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
       if (forExport && maHidden) return
       traces.push({ x:xs, y:sma(ys, ma), name:maName, yaxis,
         type:'scatter', mode:'lines',
-        line:{ color, width: forExport ? 1.5 : 1.5, dash:'dot' },
+        line:{ color, width: forExport ? 2 : 1.5, dash:'dot' },
         opacity:0.8,
         visible: maHidden ? 'legendonly' : true })
     }
@@ -298,7 +334,7 @@ export default function ChartPanel({ dataset }) {
       responsive:true, displaylogo:false,
       modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
       toImageButtonOptions:{ format:'png', filename:`econsur_${dataset.nombre}`,
-        height:aspOpt.h, width:aspOpt.w, scale:1 },
+        height:aspOpt.h, width:aspOpt.w, scale:2 },
     }
     if (plotted.current) Plotly.react(ref.current, traces, layout, config)
     else { Plotly.newPlot(ref.current, traces, layout, config); plotted.current = true }
@@ -319,7 +355,7 @@ export default function ChartPanel({ dataset }) {
       await Plotly.newPlot(tmpDiv, traces, layout, { staticPlot:true, responsive:false })
       await Plotly.downloadImage(tmpDiv, {
         format:'png', filename:`econsur_${dataset.nombre}_${aspect}`,
-        height:aspOpt.h, width:aspOpt.w, scale:1,
+        height:aspOpt.h, width:aspOpt.w, scale:2,
       })
     } finally { Plotly.purge(tmpDiv); document.body.removeChild(tmpDiv) }
   }

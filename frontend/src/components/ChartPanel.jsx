@@ -76,6 +76,8 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
   const tickCol  = forExport || !isDark ? '#6a6050'  : '#88889a'
   const gridCol  = forExport || !isDark ? CREAM_GRID : '#1a1a28'
   const fontFam  = 'Arial,Helvetica,sans-serif'
+  
+  // Usamos las constantes que definiste arriba del script
   const tickSize = forExport ? TICK_EXPORT.size : TICK_WEB.size
   const fontBase = forExport ? FONT_EXPORT : FONT_WEB
 
@@ -87,7 +89,7 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     tickfont: { family: fontFam, size: tickSize, color: tickCol },
     tickcolor: axisLine, ticks: 'outside', ticklen: 4, tickwidth: 1,
   }
-  
+
   const xAxisBase = {
     showgrid: false, showline: true,
     linecolor: axisLine, linewidth: forExport ? 1.5 : 1,
@@ -101,9 +103,9 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     paper_bgcolor: paperBg, plot_bgcolor: bg,
     font: { ...fontBase, color: tickCol },
     margin: { 
-      t: forExport ? 100 : 16, // Aumenté un poco el margen superior para el título
-      r: hasDual ? 75 : (forExport ? 30 : 16), 
-      b: forExport ? 85 : 52, // Más espacio abajo para la leyenda
+      t: forExport ? 110 : 16, 
+      r: hasDual ? 75 : (forExport ? 40 : 16), 
+      b: forExport ? 90 : 52, 
       l: forExport ? 75 : 65 
     },
     xaxis: { ...xAxisBase },
@@ -123,35 +125,30 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     }} : {}),
     legend: {
       x: 0, 
-      y: forExport ? -0.18 : -0.20, 
+      y: forExport ? -0.18 : -0.25, 
       orientation: 'h',
       bgcolor: 'transparent',
-      // CORRECCIÓN: Ahora usa el tamaño de fuente que definiste en las constantes
+      // CORREGIDO: ahora sí lee el tamaño de FONT_EXPORT
       font: { family: fontFam, size: forExport ? fontBase.size : 11, color: tickCol },
-    },
-    hovermode: 'x unified',
-    hoverlabel: {
-      bgcolor:     forExport || !isDark ? '#ffffff' : '#1a1a2e',
-      bordercolor: forExport || !isDark ? '#ccbbaa' : '#44446a',
-      font: { family: fontFam, size: 13, color: forExport || !isDark ? '#1a1a1a' : '#e8e8f0' },
     },
     ...(forExport ? {
       annotations: [
-        { xref:'paper', yref:'paper', x:0, y:1.08, xanchor:'left', yanchor:'bottom',
+        { xref:'paper', yref:'paper', x:0, y:1.12, xanchor:'left', yanchor:'bottom',
           text:'<b>ECONSUR · DATASET STUDIO</b>',
-          font:{ family: fontFam, size:16, color:'#3a3020' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:0, y:1.02, xanchor:'left', yanchor:'bottom',
-          text:`${nombre?.toUpperCase()}  (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
-          font:{ family: fontFam, size:14, color:'#6a6050' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:1, y:1.08, xanchor:'right', yanchor:'bottom',
+          font:{ family: fontFam, size: 20, color:'#3a3020' }, showarrow:false },
+        { xref:'paper', yref:'paper', x:0, y:1.04, xanchor:'left', yanchor:'bottom',
+          text:`${nombre?.toUpperCase()} (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
+          font:{ family: fontFam, size: 18, color:'#6a6050' }, showarrow:false },
+        { xref:'paper', yref:'paper', x:1, y:1.12, xanchor:'right', yanchor:'bottom',
           text:'ECONSUR RESEARCH',
-          font:{ family: fontFam, size:12, color:'#9a8a70' }, showarrow:false },
+          font:{ family: fontFam, size: 14, color:'#9a8a70' }, showarrow:false },
       ],
-      // LÍNEA ELIMINADA CORRECTAMENTE (borré el objeto para limpiar el código)
+      // LÍNEA ELIMINADA POR COMPLETO
       shapes: [], 
     } : {}),
   }
 }
+
 
 function buildTraces({ data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
                        ajusteS1, ajusteS2, palette, forExport,

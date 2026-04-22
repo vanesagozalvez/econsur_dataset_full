@@ -296,7 +296,7 @@ export default function ChartPanel({ dataset }) {
       responsive:true, displaylogo:false,
       modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
       toImageButtonOptions:{ format:'png', filename:`econsur_${dataset.nombre}`,
-        height:aspOpt.h, width:aspOpt.w, scale:2 },
+        height:aspOpt.h, width:aspOpt.w, scale:1 },
     }
     if (plotted.current) Plotly.react(ref.current, traces, layout, config)
     else { Plotly.newPlot(ref.current, traces, layout, config); plotted.current = true }
@@ -317,7 +317,7 @@ export default function ChartPanel({ dataset }) {
       await Plotly.newPlot(tmpDiv, traces, layout, { staticPlot:true, responsive:false })
       await Plotly.downloadImage(tmpDiv, {
         format:'png', filename:`econsur_${dataset.nombre}_${aspect}`,
-        height:aspOpt.h, width:aspOpt.w, scale:2,
+        height:aspOpt.h, width:aspOpt.w, scale:1,
       })
     } finally { Plotly.purge(tmpDiv); document.body.removeChild(tmpDiv) }
   }

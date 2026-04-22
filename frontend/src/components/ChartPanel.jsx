@@ -67,10 +67,10 @@ const TICK_WEB    = { size:17 }
 const TICK_EXPORT = { size:24 }
 
 function buildEditorialLayout({ forExport, isDark, hasDual, palette,
-                                 nombre, desde, hasta,
-                                 autoRange1, autoRange2, yRange1, yRange2,
-                                 chartDesde, chartHasta }) {
-  const bg       = forExport || !isDark ? CREAM      : 'transparent'
+                                  nombre, desde, hasta,
+                                  autoRange1, autoRange2, yRange1, yRange2,
+                                  chartDesde, chartHasta }) {
+  const bg        = forExport || !isDark ? CREAM      : 'transparent'
   const paperBg  = forExport || !isDark ? CREAM      : 'transparent'
   const axisLine = forExport || !isDark ? '#888070'  : '#44446a'
   const tickCol  = forExport || !isDark ? '#6a6050'  : '#88889a'
@@ -87,20 +87,25 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     tickfont: { family: fontFam, size: tickSize, color: tickCol },
     tickcolor: axisLine, ticks: 'outside', ticklen: 4, tickwidth: 1,
   }
+  
   const xAxisBase = {
     showgrid: false, showline: true,
     linecolor: axisLine, linewidth: forExport ? 1.5 : 1,
     mirror: false, zeroline: false,
     tickfont: { family: fontFam, size: tickSize, color: tickCol },
     tickcolor: axisLine, ticks: 'outside', ticklen: 4, tickwidth: 1,
-    // Filtro de fechas del gráfico (independiente del dataset)
     ...(chartDesde ? { range: [chartDesde, chartHasta || undefined] } : {}),
   }
 
   return {
     paper_bgcolor: paperBg, plot_bgcolor: bg,
     font: { ...fontBase, color: tickCol },
-    margin: { t: forExport ? 90 : 16, r: hasDual ? 75 : (forExport ? 30 : 16), b: forExport ? 72 : 52, l: forExport ? 75 : 65 },
+    margin: { 
+      t: forExport ? 100 : 16, // Aumenté un poco el margen superior para el título
+      r: hasDual ? 75 : (forExport ? 30 : 16), 
+      b: forExport ? 85 : 52, // Más espacio abajo para la leyenda
+      l: forExport ? 75 : 65 
+    },
     xaxis: { ...xAxisBase },
     yaxis: {
       ...baseAxis,
@@ -117,9 +122,12 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
       ...((!autoRange2 && yRange2) ? { range: yRange2 } : {}),
     }} : {}),
     legend: {
-      x: 0, y: forExport ? -0.14 : -0.20, orientation: 'h',
+      x: 0, 
+      y: forExport ? -0.18 : -0.20, 
+      orientation: 'h',
       bgcolor: 'transparent',
-      font: { family: fontFam, size: forExport ? 13 : 11, color: tickCol },
+      // CORRECCIÓN: Ahora usa el tamaño de fuente que definiste en las constantes
+      font: { family: fontFam, size: forExport ? fontBase.size : 11, color: tickCol },
     },
     hovermode: 'x unified',
     hoverlabel: {
@@ -129,21 +137,18 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     },
     ...(forExport ? {
       annotations: [
-        { xref:'paper', yref:'paper', x:0, y:1.0, xanchor:'left', yanchor:'bottom',
+        { xref:'paper', yref:'paper', x:0, y:1.08, xanchor:'left', yanchor:'bottom',
           text:'<b>ECONSUR · DATASET STUDIO</b>',
-          font:{ family: fontFam, size:14, color:'#3a3020' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:0, y:0.942, xanchor:'left', yanchor:'bottom',
+          font:{ family: fontFam, size:16, color:'#3a3020' }, showarrow:false },
+        { xref:'paper', yref:'paper', x:0, y:1.02, xanchor:'left', yanchor:'bottom',
           text:`${nombre?.toUpperCase()}  (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
-          font:{ family: fontFam, size:12, color:'#6a6050' }, showarrow:false },
-        { xref:'paper', yref:'paper', x:1, y:1.0, xanchor:'right', yanchor:'bottom',
+          font:{ family: fontFam, size:14, color:'#6a6050' }, showarrow:false },
+        { xref:'paper', yref:'paper', x:1, y:1.08, xanchor:'right', yanchor:'bottom',
           text:'ECONSUR RESEARCH',
-          font:{ family: fontFam, size:11, color:'#9a8a70' }, showarrow:false },
+          font:{ family: fontFam, size:12, color:'#9a8a70' }, showarrow:false },
       ],
-      #shapes: [{
-       # type:'line', xref:'paper', yref:'paper',
-        #x0:0, x1:1, y0:0.93, y1:0.93,
-        #line:{ color:'#8a7a60', width:1.5 },
-      }],
+      // LÍNEA ELIMINADA CORRECTAMENTE (borré el objeto para limpiar el código)
+      shapes: [], 
     } : {}),
   }
 }

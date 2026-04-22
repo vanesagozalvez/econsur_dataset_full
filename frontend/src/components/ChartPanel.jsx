@@ -139,10 +139,10 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
           text:'ECONSUR RESEARCH',
           font:{ family: fontFam, size:11, color:'#9a8a70' }, showarrow:false },
       ],
-      shapes: [{
-        type:'line', xref:'paper', yref:'paper',
-        x0:0, x1:1, y0:0.93, y1:0.93,
-        line:{ color:'#8a7a60', width:1.5 },
+      #shapes: [{
+       # type:'line', xref:'paper', yref:'paper',
+        #x0:0, x1:1, y0:0.93, y1:0.93,
+        #line:{ color:'#8a7a60', width:1.5 },
       }],
     } : {}),
   }

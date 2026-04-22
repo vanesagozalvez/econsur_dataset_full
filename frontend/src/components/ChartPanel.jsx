@@ -62,9 +62,9 @@ const Toggle = ({ active, onClick, color, icon, label, title }) => (
 
 // ── Tipografías más grandes para el gráfico ──────────────────────────────────
 const FONT_WEB    = { family:'Arial,Helvetica,sans-serif', size:13 }
-const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:14 }
-const TICK_WEB    = { size:12 }
-const TICK_EXPORT = { size:13 }
+const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:15 }
+const TICK_WEB    = { size:13 }
+const TICK_EXPORT = { size:14 }
 
 function buildEditorialLayout({ forExport, isDark, hasDual, palette,
                                  nombre, desde, hasta,

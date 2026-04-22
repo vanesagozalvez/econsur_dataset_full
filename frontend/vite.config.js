@@ -4,18 +4,22 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  // En desarrollo, proxy las llamadas /api al backend Python
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      }
+      '/api': { target: 'http://localhost:8000', changeOrigin: true }
     }
   },
-  // El build se genera en backend/static/ directamente
   build: {
     outDir: resolve(__dirname, '../backend/static'),
     emptyOutDir: true,
+    rollupOptions: {
+      // Plotly se carga desde CDN — no se incluye en el bundle
+      external: ['plotly.js-dist-min'],
+      output: {
+        globals: {
+          'plotly.js-dist-min': 'Plotly'
+        }
+      }
+    }
   }
 })

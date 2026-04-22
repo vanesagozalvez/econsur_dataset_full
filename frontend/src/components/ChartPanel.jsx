@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-let Plotly = null
-const loadPlotly = async () => {
-  if (!Plotly) Plotly = (await import('plotly.js-dist-min')).default
-  return Plotly
-}
+// Plotly se carga desde CDN como variable global window.Plotly
+const getPlotly = () => window.Plotly
 
 function sma(values, w) {
   return values.map((_, i) => {
@@ -27,12 +24,9 @@ const PAL_EXPORT = ['#7a1a2e','#1a6b3a','#1a3a7a','#7a4a00','#5a0050','#2a5a50']
 const CREAM      = '#f5f0e8'
 const CREAM_GRID = '#e8e0ce'
 
-const ASPECT_OPTS = [
-  { key:'web',      label:'Web',      icon:'⬛', ratio:null,  w:1400, h:650  },
-  { key:'report',   label:'Reporte',  icon:'📄', ratio:'4/3', w:1200, h:900  },
-  { key:'square',   label:'Cuadrado', icon:'⬜', ratio:'1/1', w:900,  h:900  },
-  { key:'portrait', label:'Vertical', icon:'📱', ratio:'3/4', w:900,  h:1200 },
-]
+// Formato de exportación fijo: Reporte 4:3
+const EXPORT_W = 1400
+const EXPORT_H = 1050
 const CHART_TYPES = [['scatter','Línea'],['bar','Barras'],['scatter-area','Área']]
 const MA_OPTS     = [[0,'Sin MM'],[3,'MM3'],[4,'MM4'],[12,'MM12']]
 
@@ -253,8 +247,6 @@ export default function ChartPanel({ dataset }) {
   const [ma1,      setMa1]      = useState(0)
   const [ma2,      setMa2]      = useState(0)
   const [ma3,      setMa3]      = useState(0)
-  const [aspect,   setAspect]   = useState('web')
-  const [ready,    setReady]    = useState(false)
   const [autoScale, setAutoScale] = useState(false)
   const [ajusteS1,  setAjusteS1]  = useState(false)
   const [ajusteS2,  setAjusteS2]  = useState(false)
@@ -262,7 +254,7 @@ export default function ChartPanel({ dataset }) {
   const [chartDesde, setChartDesde] = useState('')
   const [chartHasta, setChartHasta] = useState('')
 
-  useEffect(() => { loadPlotly().then(() => setReady(true)) }, [])
+  const [ready, setReady] = useState(true) // Plotly cargado por CDN
   useEffect(() => {
     if (cols.length) { setS1(cols[0]?.label||''); setS2(''); setS3('') }
     setAjusteS1(false); setAjusteS2(false)
@@ -305,7 +297,6 @@ export default function ChartPanel({ dataset }) {
     const isDark   = getIsDark()
     const palette  = forExport ? PAL_EXPORT : (isDark ? PAL_DARK : PAL_LIGHT)
     const hasDual  = (s2 && s2!==s1) || (s3 && !(ajusteS1 && ajusteS2))
-    const aspOpt   = ASPECT_OPTS.find(a => a.key === aspect)
 
     const traces = buildTraces({ data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
                                   ajusteS1, ajusteS2, palette, forExport, hiddenTraces })
@@ -315,7 +306,7 @@ export default function ChartPanel({ dataset }) {
     if (autoScale && s2 && hasDual) { autoRange2 = false; yRange2 = calcYRange(s2, ajusteS2) }
 
     const layout = buildEditorialLayout({
-      forExport, isDark, hasDual, palette, aspOpt,
+      forExport, isDark, hasDual, palette,
       nombre: dataset?.nombre||'', desde: dataset?.desde||'', hasta: dataset?.hasta||'',
       autoRange1, autoRange2, yRange1, yRange2,
       chartDesde: chartDesde || null,
@@ -323,46 +314,43 @@ export default function ChartPanel({ dataset }) {
     })
     return { traces, layout }
   }, [data, s1,s2,s3, ct1,ct2,ct3, ma1,ma2,ma3,
-      ajusteS1, ajusteS2, autoScale, aspect, dataset,
+      ajusteS1, ajusteS2, autoScale, dataset,
       calcYRange, chartDesde, chartHasta])
 
   useEffect(() => {
     if (!ready || !ref.current || !data.length) return
     const { traces, layout } = renderChart(false)
-    const aspOpt = ASPECT_OPTS.find(a => a.key === aspect)
     const config = {
       responsive:true, displaylogo:false,
       modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
       toImageButtonOptions:{ format:'png', filename:`econsur_${dataset.nombre}`,
-        height:aspOpt.h, width:aspOpt.w, scale:2 },
+        height:EXPORT_H, width:EXPORT_W, scale:2 },
     }
-    if (plotted.current) Plotly.react(ref.current, traces, layout, config)
-    else { Plotly.newPlot(ref.current, traces, layout, config); plotted.current = true }
-  }, [ready, renderChart, aspect, dataset])
+    const P = getPlotly()
+    if (plotted.current) P.react(ref.current, traces, layout, config)
+    else { P.newPlot(ref.current, traces, layout, config); plotted.current = true }
+  }, [ready, renderChart, dataset])
 
   // ── Exportar PNG: captura exacta de lo visible en pantalla ───────────────
   const dlPng = async () => {
     if (!ref.current) return
-    await loadPlotly()
-    const aspOpt      = ASPECT_OPTS.find(a => a.key === aspect)
-    const hidden      = getHiddenTraces()          // series ocultas por el usuario
+    const hidden = getHiddenTraces()
     const { traces, layout } = renderChart(true, hidden)
-
     const tmpDiv = document.createElement('div')
-    tmpDiv.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${aspOpt.w}px;height:${aspOpt.h}px;`
+    tmpDiv.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${EXPORT_W}px;height:${EXPORT_H}px;`
     document.body.appendChild(tmpDiv)
     try {
-      await Plotly.newPlot(tmpDiv, traces, layout, { staticPlot:true, responsive:false })
-      await Plotly.downloadImage(tmpDiv, {
-        format:'png', filename:`econsur_${dataset.nombre}_${aspect}`,
-        height:aspOpt.h, width:aspOpt.w, scale:2,
+      const P = getPlotly()
+      await P.newPlot(tmpDiv, traces, layout, { staticPlot:true, responsive:false })
+      await P.downloadImage(tmpDiv, {
+        format:'png', filename:`econsur_${dataset.nombre}_reporte`,
+        height:EXPORT_H, width:EXPORT_W, scale:2,
       })
-    } finally { Plotly.purge(tmpDiv); document.body.removeChild(tmpDiv) }
+    } finally { getPlotly().purge(tmpDiv); document.body.removeChild(tmpDiv) }
   }
 
   const isDark  = getIsDark()
   const palette = isDark ? PAL_DARK : PAL_LIGHT
-  const aspOpt  = ASPECT_OPTS.find(a => a.key === aspect)
   const canAjust = !!s3
 
   const INPUT_DATE = {
@@ -400,13 +388,6 @@ export default function ChartPanel({ dataset }) {
         }}>
           {/* Izquierda: proporciones + autoescala */}
           <div style={{ display:'flex', alignItems:'center', gap:5, flexWrap:'wrap' }}>
-            <span style={{ fontSize:11, color:'var(--text-muted)', marginRight:2 }}>Proporción:</span>
-            {ASPECT_OPTS.map(a => (
-              <Btn key={a.key} active={aspect===a.key} onClick={() => setAspect(a.key)} color="var(--teal)">
-                {a.icon} {a.label}
-              </Btn>
-            ))}
-            <div style={{ width:1, background:'var(--border)', height:18, margin:'0 4px' }}/>
             <Toggle active={autoScale} onClick={() => setAutoScale(v => !v)}
               color="var(--violet)" icon="↕" label="Autoescala"
               title="Ajusta cada eje Y al rango de sus propios datos" />
@@ -447,16 +428,9 @@ export default function ChartPanel({ dataset }) {
         </div>
 
         {/* Gráfico */}
-        <div style={{
-          flex: aspOpt.ratio ? '0 0 auto' : 1,
-          display:'flex', alignItems:'center', justifyContent:'center',
-          minHeight:0,
-        }}>
+        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', minHeight:0 }}>
           <div style={{
-            width:'100%',
-            aspectRatio: aspOpt.ratio || undefined,
-            height: aspOpt.ratio ? undefined : '100%',
-            maxHeight: aspOpt.ratio ? 'calc(100vh - 240px)' : undefined,
+            width:'100%', height:'100%',
             borderRadius:10, overflow:'hidden',
             background: isDark ? 'var(--ink-900)' : CREAM,
             border:'1px solid var(--border)',

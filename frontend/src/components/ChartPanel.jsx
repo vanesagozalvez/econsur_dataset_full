@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { 
+  LineIcon, BarChartIcon, AreaIcon, AutoScaleIcon, CameraIcon as CameraIconComponent,
+  ChartViewIcon, TableViewIcon, InfoViewIcon, SeriesIcon, SettingsIcon
+} from './Icons'
 
 // Plotly se carga desde CDN como variable global window.Plotly
 const getPlotly = () => window.Plotly
@@ -27,7 +31,11 @@ const CREAM_GRID = '#e8e0ce'
 // Formato de exportación fijo: Reporte 4:3
 const EXPORT_W = 1400
 const EXPORT_H = 1050
-const CHART_TYPES = [['scatter','Línea'],['bar','Barras'],['scatter-area','Área']]
+const CHART_TYPES = [
+  { value:'scatter', label:'Línea', icon: LineIcon },
+  { value:'bar', label:'Barras', icon: BarChartIcon },
+  { value:'scatter-area', label:'Área', icon: AreaIcon }
+]
 const MA_OPTS     = [[0,'Sin MM'],[3,'MM3'],[4,'MM4'],[12,'MM12']]
 
 const Btn = ({ active, onClick, color, children, title }) => (
@@ -56,9 +64,9 @@ const Toggle = ({ active, onClick, color, icon, label, title }) => (
 
 // ── Tipografías más grandes para el gráfico ──────────────────────────────────
 const FONT_WEB    = { family:'Arial,Helvetica,sans-serif', size:13 }
-const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:19 }   // +50% vs 13
+const FONT_EXPORT = { family:'Arial,Helvetica,sans-serif', size:26 }   // +100% vs 13
 const TICK_WEB    = { size:12 }
-const TICK_EXPORT = { size:19 }   // +50%
+const TICK_EXPORT = { size:24 }   // +100%
 
 function buildEditorialLayout({ forExport, isDark, hasDual, palette,
                                  nombre, desde, hasta,
@@ -133,10 +141,10 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
     }} : {}),
     legend: {
       x: 0,
-      y: forExport ? -0.13 : -0.20,
+      y: forExport ? -0.15 : -0.20,
       orientation: 'h',
       bgcolor: 'transparent',
-      font: { family: fontFam, size: forExport ? 17 : 11, color: tickCol },
+      font: { family: fontFam, size: forExport ? 30 : 11, color: tickCol },
     },
     hovermode: 'x unified',
     hoverlabel: {
@@ -152,7 +160,7 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
           x: 0, y: 1.0,
           xanchor:'left', yanchor:'bottom',
           text: `${nombre?.toUpperCase()}  (${desde?.slice(0,4)||''}–${hasta?.slice(0,4)||''})`,
-          font:{ family: fontFam, size: 16, color:'#5a5040', weight:'bold' },
+          font:{ family: fontFam, size: 28, color:'#5a5040', weight:'bold' },
           showarrow: false,
         },
         // ECONSUR RESEARCH — esquina derecha
@@ -161,7 +169,7 @@ function buildEditorialLayout({ forExport, isDark, hasDual, palette,
           x: 1, y: 1.0,
           xanchor:'right', yanchor:'bottom',
           text: 'ECONSUR RESEARCH',
-          font:{ family: fontFam, size: 13, color:'#9a8a70' },
+          font:{ family: fontFam, size: 22, color:'#9a8a70' },
           showarrow: false,
         },
       ],
@@ -253,6 +261,7 @@ export default function ChartPanel({ dataset }) {
   // Filtro de fechas del gráfico (independiente del dataset)
   const [chartDesde, setChartDesde] = useState('')
   const [chartHasta, setChartHasta] = useState('')
+  const [sidebarTab, setSidebarTab] = useState('series')  // 'series' | 'settings'
 
   const [ready, setReady] = useState(true) // Plotly cargado por CDN
   useEffect(() => {
@@ -446,81 +455,264 @@ export default function ChartPanel({ dataset }) {
         </div>
       </div>
 
-      {/* ── PANEL LATERAL ── */}
+      {/* ── PANEL LATERAL CON TABS ── */}
       <div style={{
-        width:230, flexShrink:0, display:'flex', flexDirection:'column', gap:12,
-        padding:'12px 14px', borderRadius:10, overflowY:'auto',
+        width:260, flexShrink:0, display:'flex', flexDirection:'column',
+        borderRadius:10, overflow:'hidden',
         background:'var(--ink-900)', border:'1px solid var(--border)',
-        alignSelf:'flex-start',
+        alignSelf:'flex-start', height:'100%', minHeight:0,
       }}>
-        <div style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)',
-                      letterSpacing:'.06em', borderBottom:'1px solid var(--border)',
-                      paddingBottom:8 }}>
-          Series del gráfico
-        </div>
-
-        {/* Serie 1 */}
-        <SerieBlock s={s1} setS={setS1} ct={ct1} setCt={setCt1} ma={ma1} setMa={setMa1}
-          idx={0} label="Serie 1" palette={palette} cols={cols}
-          ajuste={ajusteS1} setAjuste={setAjusteS1} canAjust={canAjust} s3={s3} />
-        <DIV />
-        <SerieBlock s={s2} setS={setS2} ct={ct2} setCt={setCt2} ma={ma2} setMa={setMa2}
-          idx={1} label="Serie 2 (opcional)" palette={palette} cols={cols}
-          ajuste={ajusteS2} setAjuste={setAjusteS2} canAjust={canAjust} s3={s3} includeNone />
-        <DIV />
-
-        {/* Serie 3 */}
-        <div style={{ fontSize:11, fontWeight:600, color: palette[2], letterSpacing:'.04em' }}>
-          Serie 3 <span style={{ fontWeight:400, opacity:.6 }}>(opcional / divisor)</span>
-        </div>
-        <SelectS value={s3} onChange={setS3} includeNone />
-        {s3 && (
-          <>
-            <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
-              {CHART_TYPES.map(([v,l]) => <Btn key={v} active={ct3===v} onClick={()=>setCt3(v)} color={palette[2]}>{l}</Btn>)}
-            </div>
-            <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
-              {MA_OPTS.map(([v,l]) => <Btn key={v} active={ma3===v} onClick={()=>setMa3(v)} color={palette[2]}>{l}</Btn>)}
-            </div>
-            {(ajusteS1 || ajusteS2) && (
-              <div style={{
-                padding:'7px 10px', borderRadius:8, fontSize:11, lineHeight:1.5,
-                background: isDark ? '#1a0f00' : '#fff8e8',
-                border:`1px solid ${palette[2]}40`, color: palette[2],
-              }}>
-                ÷ Divisor de: {[ajusteS1 && 'Serie 1', ajusteS2 && 'Serie 2'].filter(Boolean).join(' y ')}
-                {ajusteS1 && ajusteS2 && ' — no se grafica por separado'}
-              </div>
-            )}
-          </>
-        )}
-
-        <DIV />
-
-        {autoScale && (
-          <div style={{
-            padding:'7px 10px', borderRadius:8, fontSize:11, lineHeight:1.5,
-            background: isDark ? '#120a1f' : '#f5f0ff',
-            border:`1px solid ${'var(--violet)'}40`, color:'var(--violet)',
-          }}>↕ Autoescala activa por eje.</div>
-        )}
-
+        {/* Tab Headers */}
         <div style={{
-          padding:'8px 10px', borderRadius:8, fontSize:11, lineHeight:1.5,
-          background: isDark ? '#0f1a12' : '#f0ece0',
-          border:`1px solid ${isDark?'#1a3a20':'#c8b890'}`,
-          color:'var(--text-muted)',
+          display:'flex', gap:1, padding:'6px 6px',
+          borderBottom:'1px solid var(--border)',
+          background:'var(--ink-950)',
+          flexShrink:0,
         }}>
-          📷 El PNG exportado captura exactamente lo que ves: series visibles, fechas filtradas y estilo editorial.
+          <button
+            onClick={() => setSidebarTab('series')}
+            title="Seleccionar series del gráfico"
+            style={{
+              flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+              padding:'8px 12px', borderRadius:7, fontSize:12, fontWeight:500,
+              cursor:'pointer', transition:'all 0.12s',
+              background: sidebarTab==='series' ? 'var(--ink-800)' : 'transparent',
+              border: sidebarTab==='series' ? '1px solid var(--gold)' : '1px solid transparent',
+              color: sidebarTab==='series' ? 'var(--gold)' : 'var(--text-muted)',
+            }}>
+            <SeriesIcon size={14} />
+            <span>Series</span>
+          </button>
+          <button
+            onClick={() => setSidebarTab('settings')}
+            title="Ajustes técnicos (Medias Móviles, etc.)"
+            style={{
+              flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+              padding:'8px 12px', borderRadius:7, fontSize:12, fontWeight:500,
+              cursor:'pointer', transition:'all 0.12s',
+              background: sidebarTab==='settings' ? 'var(--ink-800)' : 'transparent',
+              border: sidebarTab==='settings' ? '1px solid var(--violet)' : '1px solid transparent',
+              color: sidebarTab==='settings' ? 'var(--violet)' : 'var(--text-muted)',
+            }}>
+            <SettingsIcon size={14} />
+            <span>Ajustes</span>
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div style={{
+          flex:1, overflowY:'auto', padding:'12px 14px', display:'flex', flexDirection:'column', gap:12,
+          minHeight:0,
+        }}>
+          {/* TAB: Series */}
+          {sidebarTab === 'series' && (
+            <>
+              <div style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)',
+                            letterSpacing:'.06em', paddingBottom:8 }}>
+                Seleccionar Series
+              </div>
+
+              {/* Serie 1 */}
+              <SerieBlockMinimal s={s1} setS={setS1} idx={0} label="Serie 1" palette={palette} cols={cols} />
+              <DIV />
+              <SerieBlockMinimal s={s2} setS={setS2} idx={1} label="Serie 2 (opt.)" palette={palette} cols={cols} includeNone />
+              <DIV />
+              
+              {/* Serie 3 */}
+              <div style={{ fontSize:11, fontWeight:600, color: palette[2], letterSpacing:'.04em' }}>
+                Serie 3 <span style={{ fontWeight:400, opacity:.6 }}>(divisor)</span>
+              </div>
+              <select value={s3} onChange={e => setS3(e.target.value)} style={{
+                background:'var(--ink-800)', border:'1px solid var(--border-subtle)',
+                color:'var(--text-primary)', borderRadius:8,
+                padding:'5px 28px 5px 8px', fontSize:12, width:'100%',
+              }}>
+                <option value="">— Ninguna —</option>
+                {cols.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+              </select>
+            </>
+          )}
+
+          {/* TAB: Ajustes Técnicos */}
+          {sidebarTab === 'settings' && (
+            <>
+              <div style={{ fontSize:12, fontWeight:600, color:'var(--text-secondary)',
+                            letterSpacing:'.06em', paddingBottom:8 }}>
+                Ajustes Técnicos
+              </div>
+
+              {/* Serie 1 Adjustments */}
+              {s1 && (
+                <>
+                  <div style={{ fontSize:11, fontWeight:600, color: palette[0], letterSpacing:'.04em' }}>
+                    {s1}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginBottom:4 }}>Tipo de gráfico</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {CHART_TYPES.map(({ value, label: lbl, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => setCt1(value)}
+                        title={lbl}
+                        style={{
+                          width:40, height:36, borderRadius:7, display:'flex',
+                          alignItems:'center', justifyContent:'center', cursor:'pointer',
+                          background: ct1===value ? palette[0]+'22' : 'var(--ink-800)',
+                          color: ct1===value ? palette[0] : 'var(--text-muted)',
+                          border: ct1===value ? `1px solid ${palette[0]}55` : '1px solid var(--border-subtle)',
+                          transition:'all 0.1s',
+                        }}>
+                        <Icon size={16} />
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:8, marginBottom:4 }}>Medias Móviles</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {MA_OPTS.map(([v,l]) => (
+                      <button key={v} onClick={() => setMa1(v)} style={{
+                        padding:'3px 8px', borderRadius:7, fontSize:10, fontWeight:500, cursor:'pointer',
+                        background: ma1===v ? palette[0]+'22' : 'var(--ink-800)',
+                        color: ma1===v ? palette[0] : 'var(--text-muted)',
+                        border: ma1===v ? `1px solid ${palette[0]}55` : '1px solid var(--border-subtle)',
+                        transition:'all 0.1s',
+                      }}>{l}</button>
+                    ))}
+                  </div>
+                  {canAjust && (
+                    <button onClick={() => setAjusteS1(v => !v)}
+                      title={`Divide por "${s3}"`}
+                      style={{
+                        display:'flex', alignItems:'center', gap:5,
+                        padding:'4px 9px', borderRadius:7, fontSize:10, fontWeight:500, cursor:'pointer', marginTop:8,
+                        background: ajusteS1 ? palette[0]+'20' : 'var(--ink-800)',
+                        color: ajusteS1 ? palette[0] : 'var(--text-muted)',
+                        border: ajusteS1 ? `1px solid ${palette[0]}55` : '1px solid var(--border-subtle)',
+                        transition:'all 0.12s',
+                      }}>
+                      <span style={{ fontSize:12 }}>÷</span>
+                      <span>{ajusteS1 ? `÷ ${s3}` : `Ajustar por ${s3}`}</span>
+                    </button>
+                  )}
+                  <DIV />
+                </>
+              )}
+
+              {/* Serie 2 Adjustments */}
+              {s2 && (
+                <>
+                  <div style={{ fontSize:11, fontWeight:600, color: palette[1], letterSpacing:'.04em' }}>
+                    {s2}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginBottom:4 }}>Tipo de gráfico</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {CHART_TYPES.map(({ value, label: lbl, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => setCt2(value)}
+                        title={lbl}
+                        style={{
+                          width:40, height:36, borderRadius:7, display:'flex',
+                          alignItems:'center', justifyContent:'center', cursor:'pointer',
+                          background: ct2===value ? palette[1]+'22' : 'var(--ink-800)',
+                          color: ct2===value ? palette[1] : 'var(--text-muted)',
+                          border: ct2===value ? `1px solid ${palette[1]}55` : '1px solid var(--border-subtle)',
+                          transition:'all 0.1s',
+                        }}>
+                        <Icon size={16} />
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:8, marginBottom:4 }}>Medias Móviles</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {MA_OPTS.map(([v,l]) => (
+                      <button key={v} onClick={() => setMa2(v)} style={{
+                        padding:'3px 8px', borderRadius:7, fontSize:10, fontWeight:500, cursor:'pointer',
+                        background: ma2===v ? palette[1]+'22' : 'var(--ink-800)',
+                        color: ma2===v ? palette[1] : 'var(--text-muted)',
+                        border: ma2===v ? `1px solid ${palette[1]}55` : '1px solid var(--border-subtle)',
+                        transition:'all 0.1s',
+                      }}>{l}</button>
+                    ))}
+                  </div>
+                  {canAjust && (
+                    <button onClick={() => setAjusteS2(v => !v)}
+                      title={`Divide por "${s3}"`}
+                      style={{
+                        display:'flex', alignItems:'center', gap:5,
+                        padding:'4px 9px', borderRadius:7, fontSize:10, fontWeight:500, cursor:'pointer', marginTop:8,
+                        background: ajusteS2 ? palette[1]+'20' : 'var(--ink-800)',
+                        color: ajusteS2 ? palette[1] : 'var(--text-muted)',
+                        border: ajusteS2 ? `1px solid ${palette[1]}55` : '1px solid var(--border-subtle)',
+                        transition:'all 0.12s',
+                      }}>
+                      <span style={{ fontSize:12 }}>÷</span>
+                      <span>{ajusteS2 ? `÷ ${s3}` : `Ajustar por ${s3}`}</span>
+                    </button>
+                  )}
+                  <DIV />
+                </>
+              )}
+
+              {/* Serie 3 Adjustments */}
+              {s3 && (
+                <>
+                  <div style={{ fontSize:11, fontWeight:600, color: palette[2], letterSpacing:'.04em' }}>
+                    {s3}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginBottom:4 }}>Tipo de gráfico</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {CHART_TYPES.map(({ value, label: lbl, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => setCt3(value)}
+                        title={lbl}
+                        style={{
+                          width:40, height:36, borderRadius:7, display:'flex',
+                          alignItems:'center', justifyContent:'center', cursor:'pointer',
+                          background: ct3===value ? palette[2]+'22' : 'var(--ink-800)',
+                          color: ct3===value ? palette[2] : 'var(--text-muted)',
+                          border: ct3===value ? `1px solid ${palette[2]}55` : '1px solid var(--border-subtle)',
+                          transition:'all 0.1s',
+                        }}>
+                        <Icon size={16} />
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:8, marginBottom:4 }}>Medias Móviles</div>
+                  <div style={{ display:'flex', gap:2, flexWrap:'wrap' }}>
+                    {MA_OPTS.map(([v,l]) => (
+                      <button key={v} onClick={() => setMa3(v)} style={{
+                        padding:'3px 8px', borderRadius:7, fontSize:10, fontWeight:500, cursor:'pointer',
+                        background: ma3===v ? palette[2]+'22' : 'var(--ink-800)',
+                        color: ma3===v ? palette[2] : 'var(--text-muted)',
+                        border: ma3===v ? `1px solid ${palette[2]}55` : '1px solid var(--border-subtle)',
+                        transition:'all 0.1s',
+                      }}>{l}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Info Box */}
+              <DIV />
+              <div style={{
+                padding:'8px 10px', borderRadius:8, fontSize:10, lineHeight:1.5,
+                background: isDark ? '#0f1a12' : '#f0ece0',
+                border:`1px solid ${isDark?'#1a3a20':'#c8b890'}`,
+                color:'var(--text-muted)',
+              }}>
+                📷 El PNG captura exactamente lo que ves: series visibles, fechas filtradas y estilo editorial.
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-// ── Bloque de configuración de una serie ─────────────────────────────────────
-function SerieBlock({ s, setS, ct, setCt, ma, setMa, idx, label, palette, cols,
-                      ajuste, setAjuste, canAjust, s3, includeNone }) {
+// ── Bloque minimalista para seleccionar una serie ────────────────────────────
+function SerieBlockMinimal({ s, setS, idx, label, palette, cols, includeNone }) {
   return (
     <>
       <div style={{ fontSize:11, fontWeight:600, color: palette[idx % palette.length], letterSpacing:'.04em' }}>
@@ -535,52 +727,11 @@ function SerieBlock({ s, setS, ct, setCt, ma, setMa, idx, label, palette, cols,
         {!includeNone && <option value="">—</option>}
         {cols.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
       </select>
-      <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
-        {CHART_TYPES.map(([v,l]) => (
-          <button key={v} onClick={() => setCt(v)} style={{
-            padding:'3px 8px', borderRadius:7, fontSize:11, fontWeight:500, cursor:'pointer',
-            background: ct===v ? palette[idx % palette.length]+'22' : 'var(--ink-800)',
-            color: ct===v ? palette[idx % palette.length] : 'var(--text-muted)',
-            border: ct===v ? `1px solid ${palette[idx % palette.length]}55` : '1px solid var(--border-subtle)',
-            transition:'all 0.1s',
-          }}>{l}</button>
-        ))}
-      </div>
-      <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
-        {MA_OPTS.map(([v,l]) => (
-          <button key={v} onClick={() => setMa(v)} style={{
-            padding:'3px 8px', borderRadius:7, fontSize:11, fontWeight:500, cursor:'pointer',
-            background: ma===v ? palette[idx % palette.length]+'22' : 'var(--ink-800)',
-            color: ma===v ? palette[idx % palette.length] : 'var(--text-muted)',
-            border: ma===v ? `1px solid ${palette[idx % palette.length]}55` : '1px solid var(--border-subtle)',
-            transition:'all 0.1s',
-          }}>{l}</button>
-        ))}
-      </div>
-      {canAjust && (
-        <button onClick={() => setAjuste(v => !v)}
-          title={`Divide cada valor de ${label} por el valor de "${s3}" en el mismo período`}
-          style={{
-            display:'flex', alignItems:'center', gap:5,
-            padding:'4px 9px', borderRadius:7, fontSize:11, fontWeight:500, cursor:'pointer',
-            background: ajuste ? palette[idx % palette.length]+'20' : 'var(--ink-800)',
-            color: ajuste ? palette[idx % palette.length] : 'var(--text-muted)',
-            border: ajuste ? `1px solid ${palette[idx % palette.length]}55` : '1px solid var(--border-subtle)',
-            transition:'all 0.12s',
-          }}>
-          <span style={{ fontSize:13 }}>÷</span>
-          {ajuste ? `Ajustado por "${s3}"` : `Ajustar por "${s3}"`}
-        </button>
-      )}
     </>
   )
 }
 
 // ── Ícono cámara fotográfica ──────────────────────────────────────────────────
 const CameraIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-    <circle cx="12" cy="13" r="4"/>
-  </svg>
+  <CameraIconComponent size={18} />
 )

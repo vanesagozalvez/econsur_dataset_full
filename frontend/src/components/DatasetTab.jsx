@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ChartPanel from './ChartPanel'
 import { exportDatasetCsv } from '../utils/api'
+import { ChartViewIcon, TableViewIcon, InfoViewIcon } from './Icons'
 
 const RC = { macro:'var(--gold)', comercio:'var(--teal)', empleo:'var(--violet)', precios:'var(--coral)' }
 const RL = { macro:'Macro INDEC', comercio:'Comercio ICA', empleo:'Empleo/Ingresos', precios:'Precios IPC' }
@@ -62,20 +63,40 @@ export default function DatasetTab({ dataset }) {
 
       {/* ── View selector ── */}
       <div style={{
-        flexShrink:0, padding:'6px 20px', display:'flex', gap:4,
+        flexShrink:0, padding:'8px 20px', height:50, display:'flex', alignItems:'center', gap:6,
         borderBottom:'1px solid var(--border)',
+        background:'var(--ink-850)',
       }}>
-        {[['chart','Gráfico',<ChartSvg/>],['table','Tabla',<TableSvg/>],['info','Metadata',<InfoSvg/>]]
-          .map(([id, lbl, ico]) => (
-          <button key={id} onClick={() => setView(id)} style={{
-            display:'flex', alignItems:'center', gap:6,
-            padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:500, cursor:'pointer',
-            background: view===id ? "var(--ink-800)" : 'transparent',
-            color: view===id ? '#e8e8f0' : '#44446a',
-            border: view===id ? '1px solid var(--ink-700)' : '1px solid transparent',
-            transition:'all 0.12s',
-          }}>
-            {ico} {lbl}
+        {[
+          ['chart', 'Gráfico', ChartViewIcon],
+          ['table', 'Tabla', TableViewIcon],
+          ['info', 'Metadata', InfoViewIcon]
+        ].map(([id, title, Icon]) => (
+          <button
+            key={id}
+            onClick={() => setView(id)}
+            title={title}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center',
+              width:42, height:36, borderRadius:8, cursor:'pointer',
+              background: view===id ? 'var(--ink-800)' : 'transparent',
+              color: view===id ? 'var(--gold)' : '#88889a',
+              border: view===id ? '1px solid var(--gold)' : '1px solid transparent',
+              transition:'all 0.12s',
+            }}
+            onMouseEnter={e => {
+              if (view !== id) {
+                e.currentTarget.style.color = 'var(--text-secondary)'
+                e.currentTarget.style.borderColor = 'var(--border-subtle)'
+              }
+            }}
+            onMouseLeave={e => {
+              if (view !== id) {
+                e.currentTarget.style.color = '#88889a'
+                e.currentTarget.style.borderColor = 'transparent'
+              }
+            }}>
+            <Icon size={18} />
           </button>
         ))}
       </div>
@@ -221,6 +242,3 @@ const PagBtn = ({ onClick, disabled, label }) => (
 )
 
 const DownIcon  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-const ChartSvg  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-const TableSvg  = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M10 3v18M14 3v18"/></svg>
-const InfoSvg   = () => <svg style={{width:13,height:13}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
